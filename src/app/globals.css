@@ -1,0 +1,258 @@
+@import "tailwindcss";
+
+/* ============ Design tokens ============ */
+:root {
+  --font-display: "Fraunces";
+  --font-body: "Karla";
+  --font-mono: "JetBrains Mono";
+  --bg: #F3EFE7;
+  --paper: #FDFBF6;
+  --sidebar: #EBE4D6;
+  --ink: #211F2E;
+  --ink-soft: #5C5771;
+  --ink-faint: #8B85A0;
+  --line: rgba(33, 31, 46, 0.13);
+  --line-strong: rgba(33, 31, 46, 0.22);
+  --accent: #C13D63;
+  --accent-hover: #A82F52;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #F5DCE3;
+  --success: #1E8F72;
+  --success-soft: #DCF1E7;
+  --success-ink: #0E5A46;
+  --warn: #AD7A15;
+  --warn-soft: #F6E8C8;
+  --warn-ink: #6B4C0B;
+  --error: #B4392C;
+  --error-soft: #F7DDD8;
+  --error-ink: #7A2419;
+  --editor-bg: #1D1A28;
+  --editor-ink: #ECE8F5;
+  --editor-ink-soft: #9C96B5;
+  --editor-line: rgba(236, 232, 245, 0.10);
+  --editor-kw: #F2A6C6;
+  --editor-str: #9FD9A8;
+  --editor-num: #E8B36A;
+  --editor-com: #7C7694;
+  --editor-fn: #8FC6E8;
+  --editor-err: #F2917F;
+  --shadow: 0 1px 2px rgba(33, 31, 46, 0.06), 0 8px 24px -12px rgba(33, 31, 46, 0.18);
+  --shadow-lg: 0 4px 8px rgba(33, 31, 46, 0.08), 0 24px 48px -16px rgba(33, 31, 46, 0.24);
+  --radius: 16px;
+
+  /* Per-part accent colors, used on the home page / roadmap only */
+  --part-algo: #A8631C;
+  --part-algo-soft: #F3E4CC;
+  --part-python: #1E8F72;
+  --part-python-soft: #DCF1E7;
+  --part-avance: #6D4AAE;
+  --part-avance-soft: #E9E0F7;
+  --part-ia: #2D6FB0;
+  --part-ia-soft: #DCEAF7;
+
+  --m-body: var(--accent);
+  --m-eye: #fff;
+  --m-pupil: #26202f;
+  --m-accent2: var(--success);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17151F;
+    --paper: #1E1B29;
+    --sidebar: #161320;
+    --ink: #F1EDE3;
+    --ink-soft: #B7B0CC;
+    --ink-faint: #7C7694;
+    --line: rgba(241, 237, 227, 0.11);
+    --line-strong: rgba(241, 237, 227, 0.20);
+    --accent: #F0759A;
+    --accent-hover: #F491AF;
+    --accent-ink: #211129;
+    --accent-soft: #3A2130;
+    --success: #5FD3AE;
+    --success-soft: #163329;
+    --success-ink: #B7EFDC;
+    --warn: #EBC26B;
+    --warn-soft: #332A14;
+    --warn-ink: #F3DBA0;
+    --error: #F2917F;
+    --error-soft: #3A1F1B;
+    --error-ink: #F7C4B9;
+    --editor-bg: #100E18;
+    --editor-line: rgba(236, 232, 245, 0.08);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 28px -14px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.35), 0 32px 64px -20px rgba(0, 0, 0, 0.7);
+    --part-algo: #E8B36A;
+    --part-algo-soft: #3A2E15;
+    --part-python: #5FD3AE;
+    --part-python-soft: #163329;
+    --part-avance: #B79CF0;
+    --part-avance-soft: #2A2140;
+    --part-ia: #7EC1F0;
+    --part-ia-soft: #17293A;
+  }
+}
+
+html[data-theme="light"] {
+  --bg: #F3EFE7; --paper: #FDFBF6; --sidebar: #EBE4D6;
+  --ink: #211F2E; --ink-soft: #5C5771; --ink-faint: #8B85A0;
+  --line: rgba(33,31,46,0.13); --line-strong: rgba(33,31,46,0.22);
+  --accent: #C13D63; --accent-hover: #A82F52; --accent-ink: #FFFFFF; --accent-soft: #F5DCE3;
+  --success: #1E8F72; --success-soft: #DCF1E7; --success-ink: #0E5A46;
+  --warn: #AD7A15; --warn-soft: #F6E8C8; --warn-ink: #6B4C0B;
+  --error: #B4392C; --error-soft: #F7DDD8; --error-ink: #7A2419;
+  --editor-bg: #1D1A28; --editor-line: rgba(236,232,245,0.10);
+  --shadow: 0 1px 2px rgba(33,31,46,0.06), 0 8px 24px -12px rgba(33,31,46,0.18);
+  --part-algo: #A8631C; --part-algo-soft: #F3E4CC;
+  --part-python: #1E8F72; --part-python-soft: #DCF1E7;
+  --part-avance: #6D4AAE; --part-avance-soft: #E9E0F7;
+  --part-ia: #2D6FB0; --part-ia-soft: #DCEAF7;
+}
+html[data-theme="dark"] {
+  --bg: #17151F; --paper: #1E1B29; --sidebar: #161320;
+  --ink: #F1EDE3; --ink-soft: #B7B0CC; --ink-faint: #7C7694;
+  --line: rgba(241,237,227,0.11); --line-strong: rgba(241,237,227,0.20);
+  --accent: #F0759A; --accent-hover: #F491AF; --accent-ink: #211129; --accent-soft: #3A2130;
+  --success: #5FD3AE; --success-soft: #163329; --success-ink: #B7EFDC;
+  --warn: #EBC26B; --warn-soft: #332A14; --warn-ink: #F3DBA0;
+  --error: #F2917F; --error-soft: #3A1F1B; --error-ink: #F7C4B9;
+  --editor-bg: #100E18; --editor-line: rgba(236,232,245,0.08);
+  --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 28px -14px rgba(0,0,0,0.6);
+  --part-algo: #E8B36A; --part-algo-soft: #3A2E15;
+  --part-python: #5FD3AE; --part-python-soft: #163329;
+  --part-avance: #B79CF0; --part-avance-soft: #2A2140;
+  --part-ia: #7EC1F0; --part-ia-soft: #17293A;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-paper: var(--paper);
+  --color-sidebar: var(--sidebar);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-ink: var(--success-ink);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-warn-ink: var(--warn-ink);
+  --color-error: var(--error);
+  --color-error-soft: var(--error-soft);
+  --color-error-ink: var(--error-ink);
+  --color-editor-bg: var(--editor-bg);
+  --color-editor-ink: var(--editor-ink);
+  --color-editor-ink-soft: var(--editor-ink-soft);
+  --color-part-algo: var(--part-algo);
+  --color-part-algo-soft: var(--part-algo-soft);
+  --color-part-python: var(--part-python);
+  --color-part-python-soft: var(--part-python-soft);
+  --color-part-avance: var(--part-avance);
+  --color-part-avance-soft: var(--part-avance-soft);
+  --color-part-ia: var(--part-ia);
+  --color-part-ia-soft: var(--part-ia-soft);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+}
+
+* { box-sizing: border-box; }
+
+/* Thin, theme-aware scrollbars everywhere instead of the default OS ones (which on Windows
+   render as a thick gray track with arrow buttons and, combined with nested scroll containers
+   like the sidebar's chapter list, made the layout look cluttered/overlapping). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-faint) transparent;
+}
+*::-webkit-scrollbar { width: 9px; height: 9px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--ink-faint); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+*::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); background-clip: padding-box; }
+*::-webkit-scrollbar-corner { background: transparent; }
+
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body), -apple-system, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .display {
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 600;
+  text-wrap: balance;
+  color: var(--ink);
+  margin: 0;
+}
+
+code, .font-mono-ui { font-family: var(--font-mono), ui-monospace, monospace; }
+
+a { color: var(--accent); }
+::selection { background: var(--accent-soft); }
+
+@media print {
+  .no-print { display: none !important; }
+}
+
+.btn-primary, .btn-ghost {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  padding: 10px 18px;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform .12s ease, background .15s ease, border-color .15s ease;
+  font-family: var(--font-body), sans-serif;
+  text-decoration: none; /* also used on <a> (AppLink) */
+}
+.btn-primary:active, .btn-ghost:active { transform: scale(0.98); }
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-ghost { background: transparent; border-color: var(--line-strong); color: var(--ink); }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn-sm { padding: 7px 13px; font-size: 13px; border-radius: 8px; }
+.btn-primary:disabled, .btn-ghost:disabled { opacity: .45; cursor: not-allowed; }
+
+.tok-kw { color: var(--editor-kw); font-weight: 600; }
+.tok-str { color: var(--editor-str); }
+.tok-num { color: var(--editor-num); }
+.tok-com { color: var(--editor-com); font-style: italic; }
+.tok-fn { color: var(--editor-fn); }
+/* Live error in the code editor (see CodeEditor.tsx / lib/diagnostics.ts). */
+.diag-squiggle {
+  text-decoration: underline wavy var(--editor-err);
+  text-decoration-skip-ink: none;
+  text-underline-offset: 4px;
+}
+
+.lesson-prose code, .exercise-instr code, .glossary-def code {
+  font-family: var(--font-mono), monospace;
+  background: var(--sidebar);
+  border: 1px solid var(--line);
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-size: 0.92em;
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
