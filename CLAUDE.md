@@ -294,6 +294,23 @@ périmètre de la réécriture gérable. L'auto-complétion (point 2) a depuis �
 Si l'utilisateur demande l'une de ces trois choses, ce sont des ajouts nets, pas des bugs à
 corriger.
 
+## Déploiement Docker (ajouté le 2026-10-17)
+
+- `Dockerfile` en plusieurs étapes, `node:24-alpine`, `output: "standalone"` (next.config.ts),
+  utilisateur non-root, `HEALTHCHECK` sur `/api/health` (qui ne touche pas MongoDB, exprès).
+  `AUTH_TRUST_HOST=true` est défini dans l'image.
+- **Aucun secret dans l'image** : `.dockerignore` exclut tous les `.env*`, car Next lit ces
+  fichiers pendant le build et ils finiraient dans les couches. Le flag cloud étant décidé au
+  build, `next.config.ts` accepte `CAMI_CLOUD_ENABLED=true` explicite (argument de build Docker,
+  `true` par défaut), sans avoir besoin des secrets à ce moment-là.
+- `docker-compose.yml` : essai local sur le port 3100 (3000 et 8080 sont pris par un autre
+  projet Docker de l'utilisateur, `fixeo`). Variables dans `.env.docker` (non versionné) ; le
+  nom n'est volontairement pas `.env.production`, que Next chargerait automatiquement au build.
+- Hébergeur recommandé à l'utilisateur : **Google Cloud Run `africa-south1` (Johannesburg)**,
+  parce que le cluster Atlas est chez AWS **`af-south-1` (Le Cap)** (lu via la commande
+  `hello`). Guide pas à pas dans `DEPLOY.md` : Secret Manager, Cloud Build, `gcloud run
+  deploy`, callback OAuth, publication de l'écran de consentement, Atlas `0.0.0.0/0`.
+
 ## PWA (ajoutée le 2026-10-15)
 
 - `app/manifest.ts` : manifeste. Icônes dans `public/icons/` (any 192/512 + maskable 512),

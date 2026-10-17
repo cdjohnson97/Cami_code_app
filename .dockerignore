@@ -1,0 +1,25 @@
+# Ce qui n'entre JAMAIS dans l'image Docker.
+
+# Secrets : Next.js lit les fichiers .env* pendant le build — s'ils étaient copiés, ils se
+# retrouveraient dans les couches de l'image.
+.env*
+!.env.local.example
+!.env.docker.example
+
+# Reconstruits dans l'image
+node_modules
+.next
+out
+tsconfig.tsbuildinfo
+next-env.d.ts
+
+# Inutiles en production
+.git
+.gitignore
+.claude
+.vscode
+*.log
+npm-debug.log*
+Dockerfile
+docker-compose.yml
+.dockerignore

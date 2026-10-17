@@ -103,20 +103,23 @@ simplement un message expliquant que le backend n'est pas configuré — rien ne
 
 ## Déployer
 
-- **Vercel** (recommandé, zéro configuration) : `npx vercel`, ou connecte le dossier à un
-  nouveau projet sur [vercel.com](https://vercel.com/new).
-- **Netlify** : connecte le dossier, build command `npm run build`, publish directory `.next`
-  (avec le plugin Next.js officiel de Netlify).
-- **GitHub** : `git init`, `git add -A`, `git commit -m "Initial commit"`, puis pousse vers un
-  nouveau dépôt — les plateformes ci-dessus peuvent se brancher directement dessus.
+L'app est livrée en **image Docker** (`Dockerfile`, `docker-compose.yml`) : le guide complet,
+avec l'hébergeur recommandé (**Google Cloud Run à Johannesburg**, à côté du cluster MongoDB
+Atlas au Cap), est dans **[DEPLOY.md](./DEPLOY.md)**.
 
-Si tu as activé le backend, ajoute les mêmes variables d'environnement (`MONGODB_URI`,
-`MONGODB_DB`, `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`) dans les réglages du projet
-côté Vercel/Netlify, **puis relance un build** : l'activation du backend est décidée au moment
-du build. Pense aussi à ajouter l'URL de callback de production
-(`https://ton-domaine/api/auth/callback/google`) dans la Google Cloud Console. Hors Vercel
-(et aussi pour tester `npm start` en local), ajoute `AUTH_TRUST_HOST=true`, sinon la connexion
-échoue avec l'erreur `UntrustedHost`.
+Essai local en conditions de production :
+
+```bash
+cp .env.docker.example .env.docker   # puis remplis les valeurs
+docker compose up -d --build         # → http://localhost:3100
+```
+
+Les secrets ne sont jamais copiés dans l'image : ils sont donnés au conteneur au lancement.
+Sans Docker, `npm run build && npm start` fonctionne aussi pour un essai : Next affiche un
+avertissement lié au mode `standalone` utilisé par l'image, sans conséquence. Ajoute alors
+`AUTH_TRUST_HOST=true`, sinon la connexion échoue avec l'erreur `UntrustedHost`. Dans tous les
+cas, ajoute l'URL de callback de production (`https://ton-domaine/api/auth/callback/google`)
+dans la Google Cloud Console.
 
 ## Structure du projet
 
