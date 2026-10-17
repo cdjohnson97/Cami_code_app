@@ -303,6 +303,15 @@ corriger.
   fichiers pendant le build et ils finiraient dans les couches. Le flag cloud étant décidé au
   build, `next.config.ts` accepte `CAMI_CLOUD_ENABLED=true` explicite (argument de build Docker,
   `true` par défaut), sans avoir besoin des secrets à ce moment-là.
+- **Piège corrigé : `redirect_uri` en `https://0.0.0.0:3000`.** Derrière le proxy HTTPS d'un
+  hébergeur (Render), le serveur `standalone` reconstruit l'URL de la requête à partir de son
+  adresse d'écoute (`HOSTNAME=0.0.0.0`). Auth.js en déduisait l'URL de callback, et Google
+  bloquait la connexion (« Erreur 400 : invalid_request », message « doesn't comply with
+  Google's OAuth 2.0 policy »). `app/api/auth/[...nextauth]/route.ts` reconstruit maintenant
+  l'URL publique à partir de `X-Forwarded-Host`/`Host` et `X-Forwarded-Proto` ; un `AUTH_URL`
+  explicite garde la priorité. Vérifié avec `node .next/standalone/server.js` et de vrais
+  en-têtes `Host` (attention : `fetch` de Node **supprime** l'en-tête `Host`, il faut
+  `node:http` pour tester ça).
 - `docker-compose.yml` : essai local sur le port 3100 (3000 et 8080 sont pris par un autre
   projet Docker de l'utilisateur, `fixeo`). Variables dans `.env.docker` (non versionné) ; le
   nom n'est volontairement pas `.env.production`, que Next chargerait automatiquement au build.

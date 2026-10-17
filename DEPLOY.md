@@ -149,6 +149,16 @@ de santé sur `/api/health`, déploiement automatique à chaque commit sur `main
    consentement, `0.0.0.0/0` dans Atlas → Network Access.
 
 À savoir :
+- **« Accès bloqué : erreur d'autorisation — Erreur 400 »** à la connexion Google :
+  - `redirect_uri_mismatch` → l'URL de callback `https://…onrender.com/api/auth/callback/google`
+    n'est pas (encore) dans le client OAuth ; Google met parfois quelques minutes à prendre
+    l'ajout en compte ;
+  - `invalid_request` (« doesn't comply with Google's OAuth 2.0 policy ») → l'app a envoyé une
+    URL de callback invalide. C'était le cas avant la correction de la route Auth.js
+    (`https://0.0.0.0:3000/…`). Si ça revenait, définis `AUTH_URL=https://cami-xxxx.onrender.com`
+    dans les variables Render ;
+  - dans les deux cas, le lien « détails de l'erreur » de la page Google affiche le
+    `redirect_uri` reçu.
 - **Mise en veille** (offre gratuite) : après 15 minutes sans visite, le service s'endort et le
   réveil prend environ une minute. L'app installée (PWA) s'ouvre quand même depuis son cache
   après 5 secondes, mais la connexion et la synchro attendent le réveil. Une offre payante
