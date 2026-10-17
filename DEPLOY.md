@@ -131,6 +131,33 @@ documentation Cloud Run « Mapping custom domains » : selon la région, le mapp
 toujours disponible, et il faut alors passer par un équilibreur de charge ou Firebase Hosting.
 Pense à ajouter la nouvelle URL de callback dans Google OAuth.
 
+## Render
+
+Le dépôt contient un Blueprint, `render.yaml` : Docker, région Francfort, offre gratuite, contrôle
+de santé sur `/api/health`, déploiement automatique à chaque commit sur `main`.
+
+1. Sur <https://dashboard.render.com> : **New → Blueprint**, connecte GitHub et choisis le dépôt.
+2. Render affiche le service `cami` et demande les deux secrets :
+   - `MONGODB_URI` : la chaîne de connexion Atlas (la forme `mongodb+srv://…` fonctionne sur
+     Render) ;
+   - `AUTH_GOOGLE_SECRET` : le secret du client OAuth (`GOCSPX-…`).
+   `AUTH_SECRET` est généré par Render ; `MONGODB_DB` et `AUTH_GOOGLE_ID` sont dans le fichier.
+3. **Apply**. Le premier build Docker prend quelques minutes. L'adresse publique ressemble à
+   `https://cami-xxxx.onrender.com` ; contrôle : `https://…/api/health` → `{"status":"ok"}`.
+4. Puis la section 4 ci-dessus : URL de callback Google
+   (`https://cami-xxxx.onrender.com/api/auth/callback/google`), publication de l'écran de
+   consentement, `0.0.0.0/0` dans Atlas → Network Access.
+
+À savoir :
+- **Mise en veille** (offre gratuite) : après 15 minutes sans visite, le service s'endort et le
+  réveil prend environ une minute. L'app installée (PWA) s'ouvre quand même depuis son cache
+  après 5 secondes, mais la connexion et la synchro attendent le réveil. Une offre payante
+  supprime la veille.
+- **Distance avec la base** : Render n'a pas de région en Afrique ; chaque accès à MongoDB fait
+  l'aller-retour Francfort ↔ Le Cap. Pour l'éviter, recrée le cluster Atlas en Europe (Francfort,
+  `eu-central-1`) — la région d'un cluster ne se change pas après coup.
+- La région d'un service Render ne peut pas être modifiée après sa création.
+
 ## Chez un autre hébergeur Docker
 
 Ce qu'il faut, partout :

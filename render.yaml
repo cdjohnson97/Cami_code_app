@@ -1,0 +1,30 @@
+# Render Blueprint — crée le service CaMI en un clic depuis le dépôt GitHub.
+# Render → New → Blueprint → choisir ce dépôt. Voir DEPLOY.md, section « Render ».
+#
+# Ce dépôt est PUBLIC : aucun secret ici. Les secrets (sync: false) sont demandés par Render à
+# la création et restent dans son tableau de bord.
+services:
+  - type: web
+    name: cami
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    # Render n'a pas de région en Afrique ; Francfort est la plus proche du cluster Atlas (Le Cap).
+    region: frankfurt
+    plan: free
+    branch: main
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB
+        value: cami
+      # Clé des sessions, générée une fois par Render (ne pas la changer : tout le monde serait
+      # déconnecté).
+      - key: AUTH_SECRET
+        generateValue: true
+      # L'ID client OAuth n'est pas un secret (il apparaît dans chaque lien de connexion Google).
+      - key: AUTH_GOOGLE_ID
+        value: 630606268259-ivt9u1ip5jdae3o8nnlb341aphhblkq2.apps.googleusercontent.com
+      - key: AUTH_GOOGLE_SECRET
+        sync: false
