@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { getSession } from "next-auth/react";
 import { cloudEnabled } from "@/lib/cloud/config";
 import {
+  mergeProgress,
   pickPreferences,
   pickProgress,
   type PreferencesData,
@@ -83,20 +84,25 @@ export function CloudSync() {
         const remote = (await res.json()) as RemoteData;
         setIsAdmin(remote.role === "admin");
 
-        // The server wins for whatever it already has; a missing document falls back to this
-        // device's state and gets created by the push below.
-        if (remote.progress || remote.preferences) {
-          const local = useAppStore.getState();
-          useAppStore.getState().hydrateFromRemote({
-            ...(remote.progress ?? pickProgress(local)),
-            ...(remote.preferences ?? pickPreferences(local)),
-          });
-        }
+        // Progress: this device's and the account's are MERGED (see mergeProgress) — signing in
+        // after the free first chapter must never erase what was done before signing in.
+        // Preferences: the account wins field by field; fields it doesn't have yet (a newer
+        // setting, or no document at all) keep this device's value.
+        const local = useAppStore.getState();
+        useAppStore.getState().hydrateFromRemote({
+          ...(remote.progress ? mergeProgress(pickProgress(local), remote.progress) : pickProgress(local)),
+          ...pickPreferences(local),
+          ...(remote.preferences ?? {}),
+        });
 
+        // Push right after the pull whenever the merge may have added something the account
+        // doesn't have yet (null = "never pushed" → the push below sends it).
         const state = useAppStore.getState();
         lastPushed.current = {
-          progress: remote.progress ? JSON.stringify(pickProgress(state)) : null,
-          preferences: remote.preferences ? JSON.stringify(pickPreferences(state)) : null,
+          progress: null,
+          preferences: remote.preferences && JSON.stringify(remote.preferences) === JSON.stringify(pickPreferences(state))
+            ? JSON.stringify(pickPreferences(state))
+            : null,
         };
         readyForUser.current = user.id;
         setSyncStatus("synced");

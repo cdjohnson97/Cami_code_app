@@ -1,10 +1,11 @@
 "use client";
 
 import { useAppStore } from "@/store/useAppStore";
-import { BADGES } from "@/lib/progress";
+import { BADGES, badgeTitle } from "@/lib/progress";
 
 export function BadgesPage() {
   const earnedBadges = useAppStore((s) => s.earnedBadges);
+  const gender = useAppStore((s) => s.gender);
 
   return (
     <div>
@@ -21,7 +22,7 @@ export function BadgesPage() {
               style={{ background: "var(--paper)", borderColor: "var(--line)", boxShadow: "var(--shadow)", opacity: earned ? 1 : 0.5 }}
             >
               <div className="text-[32px] mb-2">{b.icon}</div>
-              <div className="font-bold text-sm mb-1">{b.title}</div>
+              <div className="font-bold text-sm mb-1">{badgeTitle(b, gender)}</div>
               <div className="text-xs leading-snug" style={{ color: "var(--ink-faint)" }}>{b.desc}</div>
             </div>
           );

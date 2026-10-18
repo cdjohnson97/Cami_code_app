@@ -8,6 +8,8 @@ import { highlightCode } from "@/lib/highlight";
 import { ExerciseCard } from "./ExerciseCard";
 import { Mascot } from "./Mascot";
 import { AppLink } from "./AppLink";
+import { LoginWall } from "./LoginWall";
+import { useLoginGate } from "@/lib/loginGate";
 
 export function ChapterPage({ chapterId }: { chapterId: string }) {
   const completed = useAppStore((s) => s.completed);
@@ -17,21 +19,36 @@ export function ChapterPage({ chapterId }: { chapterId: string }) {
 
   const entry = findChapterEntry(chapterId);
   const unlocked = isChapterUnlocked(chapterId, completed);
+  const gate = useLoginGate();
+  const checkingAccount = gate.checking(chapterId);
+  const mustSignIn = gate.mustSignIn(chapterId);
+  const blocked = checkingAccount || mustSignIn;
   const [showStory, setShowStory] = useState(false);
   const [exampleOutput, setExampleOutput] = useState<{ lines?: string[]; err?: string } | null>(null);
 
   useEffect(() => {
     setExampleOutput(null);
+    // Only once the chapter is really shown — not behind the sign-in wall.
+    if (blocked) return;
     if (entry?.chapter.story && !storySeen[entry.chapter.id]) {
       markStorySeen(entry.chapter.id);
       setShowStory(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chapterId]);
+  }, [chapterId, blocked]);
 
   if (!entry) return null;
   const { chapter, phase } = entry;
   const langKey = langKeyFor(phase.id);
+
+  if (checkingAccount) {
+    return (
+      <div className="flex justify-center py-24" aria-label="Vérification du compte">
+        <Mascot mood="think" size={64} interactive={false} />
+      </div>
+    );
+  }
+  if (mustSignIn) return <LoginWall chapterTitle={chapter.title} />;
 
   if (!unlocked) {
     const targetId = firstUnfinishedChapterId(completed);

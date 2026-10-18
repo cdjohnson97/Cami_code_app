@@ -5,9 +5,11 @@ import { useAppStore } from "@/store/useAppStore";
 import { flatChapters, chapterDone, isChapterUnlocked } from "@/lib/progress";
 import { MAP_ICONS } from "@/lib/curriculum";
 import { AppLink } from "./AppLink";
+import { useLoginGate } from "@/lib/loginGate";
 
 export function JourneyMapPage() {
   const completed = useAppStore((s) => s.completed);
+  const gate = useLoginGate();
   const flat = flatChapters();
 
   let currentSet = false;
@@ -56,7 +58,7 @@ export function JourneyMapPage() {
                       className="block text-xs mt-0.5"
                       style={{ color: done ? "var(--success)" : isCurrent ? "var(--accent)" : "var(--ink-faint)" }}
                     >
-                      {done ? "Terminé" : isCurrent ? "En cours" : unlocked ? "Disponible" : "Verrouillé"}
+                      {done ? "Terminé" : !unlocked ? "Verrouillé" : gate.mustSignIn(x.chapter.id) ? "🔐 Connexion requise" : isCurrent ? "En cours" : "Disponible"}
                     </span>
                   </>
                 );

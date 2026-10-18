@@ -48,7 +48,9 @@ export type Curriculum = Record<string, Phase>;
 export type Badge = {
   id: string;
   icon: string;
+  /** Inclusive title ("Persévérant·e"); see badgeTitle() for the gendered forms. */
   title: string;
+  titles?: { m: string; f: string };
   desc: string;
   check: (ctx: BadgeCheckContext) => boolean;
 };
@@ -69,8 +71,12 @@ export type GlossaryEntry = {
 
 export type MascotMood = "idle" | "happy" | "wink" | "celebrate" | "think" | "wave";
 
+/** How the app addresses the learner: "f" féminin, "m" masculin, null = inclusive forms (prêt·e). */
+export type Gender = "f" | "m" | null;
+
 export type AppState = {
   name: string | null;
+  gender: Gender;
   nameAsked: boolean;
   completed: Record<string, boolean>;
   code: Record<string, string>;

@@ -20,6 +20,7 @@ export const PROGRESS_KEYS = [
 /** How the app looks and talks to the learner → collection `preferences`. */
 export const PREFERENCE_KEYS = [
   "name",
+  "gender",
   "nameAsked",
   "theme",
   "soundOn",
@@ -37,6 +38,37 @@ function pick<K extends keyof AppState>(state: AppState, keys: readonly K[]): Pi
 
 export const pickProgress = (state: AppState): ProgressData => pick(state, PROGRESS_KEYS);
 export const pickPreferences = (state: AppState): PreferencesData => pick(state, PREFERENCE_KEYS);
+
+const trueKeys = (...maps: (Record<string, boolean> | undefined)[]) => {
+  const out: Record<string, boolean> = {};
+  for (const m of maps) for (const [k, v] of Object.entries(m ?? {})) if (v) out[k] = true;
+  return out;
+};
+
+/**
+ * Progress after sign-in = this device's progress MERGED with the account's — never one
+ * overwriting the other. Signing in is required after the first chapter, so a learner typically
+ * arrives with local progress; replacing it with the account's (possibly emptier) copy would
+ * silently erase work. Rules: anything passed / earned / seen on either side is kept; the
+ * account's saved code wins per exercise; streak comes from the most recent visit; best streak
+ * is the max; completion date is the earliest.
+ */
+export function mergeProgress(local: ProgressData, remote: Partial<ProgressData>): ProgressData {
+  const localIsNewer = (local.lastVisitDay ?? "") > (remote.lastVisitDay ?? "");
+  const dates = [local.completionDate, remote.completionDate].filter((d): d is string => !!d).sort();
+  return {
+    completed: trueKeys(remote.completed, local.completed),
+    earnedBadges: trueKeys(remote.earnedBadges, local.earnedBadges),
+    storySeen: trueKeys(remote.storySeen, local.storySeen),
+    code: { ...local.code, ...remote.code },
+    sandboxCode: { ...local.sandboxCode, ...remote.sandboxCode },
+    passAttempts: { ...local.passAttempts, ...remote.passAttempts },
+    streak: localIsNewer ? local.streak : remote.streak ?? local.streak,
+    lastVisitDay: localIsNewer ? local.lastVisitDay : remote.lastVisitDay ?? local.lastVisitDay,
+    bestStreak: Math.max(local.bestStreak, remote.bestStreak ?? 0),
+    completionDate: dates[0] ?? null,
+  };
+}
 
 // ---------------------------------------------------------------------------------------------
 // Server-side validation of what a client sends. The API never stores a field it doesn't know,
@@ -76,6 +108,7 @@ const PROGRESS_SCHEMA: Record<keyof ProgressData, Check> = {
 
 const PREFERENCES_SCHEMA: Record<keyof PreferencesData, Check> = {
   name: nullable(isString(30)),
+  gender: nullable(oneOf("f", "m")),
   nameAsked: isBool,
   theme: oneOf("auto", "light", "dark"),
   soundOn: isBool,

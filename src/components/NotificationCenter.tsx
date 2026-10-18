@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppStore } from "@/store/useAppStore";
-import { findChapterEntry, isLastChapterOfPhase, nextChapterAfter, totalExerciseCount, completedCount } from "@/lib/progress";
+import { badgeTitle, findChapterEntry, isLastChapterOfPhase, nextChapterAfter, totalExerciseCount, completedCount } from "@/lib/progress";
 import { Mascot } from "./Mascot";
 import { Confetti } from "./Confetti";
 import type { Badge } from "@/lib/types";
@@ -39,7 +39,8 @@ export function NotificationCenter() {
     if (!lastEarnedBadges.length || lastEarnedBadges === handledBadges.current) return;
     handledBadges.current = lastEarnedBadges;
     lastEarnedBadges.forEach((b, i) => {
-      window.setTimeout(() => pushToast({ kind: "badge", icon: b.icon, title: `Badge débloqué — ${b.title}` }), i * 900);
+      const title = badgeTitle(b, useAppStore.getState().gender);
+      window.setTimeout(() => pushToast({ kind: "badge", icon: b.icon, title: `Badge débloqué — ${title}` }), i * 900);
     });
     window.setTimeout(() => clearLastEarnedBadges(), lastEarnedBadges.length * 900 + 200);
     // eslint-disable-next-line react-hooks/exhaustive-deps
