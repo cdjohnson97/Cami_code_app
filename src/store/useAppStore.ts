@@ -24,6 +24,7 @@ type Store = AppState & {
   /** Shows `route` (no-op if already shown). Called by goTo and, for back/forward, by AppShell. */
   syncRoute: (route: Route) => void;
   setName: (name: string | null) => void;
+  setGender: (gender: AppState["gender"]) => void;
   markNameAsked: () => void;
   saveCode: (exerciseId: string, code: string) => void;
   registerAttempt: (exerciseId: string) => number;
@@ -45,6 +46,7 @@ type Store = AppState & {
 
 const initialAppState: AppState = {
   name: null,
+  gender: null,
   nameAsked: false,
   completed: {},
   code: {},
@@ -100,6 +102,7 @@ export const useAppStore = create<Store>()(
       clearTravelAnimation: () => set({ travelAnimation: null }),
 
       setName: (name) => set({ name, nameAsked: true }),
+      setGender: (gender) => set({ gender }),
       markNameAsked: () => set({ nameAsked: true }),
 
       saveCode: (exerciseId, code) => set((s) => ({ code: { ...s.code, [exerciseId]: code } })),

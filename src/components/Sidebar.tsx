@@ -8,6 +8,8 @@ import { chapterDone, isChapterUnlocked, totalExerciseCount, completedCount } fr
 import { BADGES } from "@/lib/progress";
 import type { Chapter } from "@/lib/types";
 import { AppLink } from "./AppLink";
+import { useResolvedTheme } from "@/lib/theme";
+import { useLoginGate } from "@/lib/loginGate";
 
 const NAV_ITEMS: { id: string; icon: string; label: string }[] = [
   { id: "carte", icon: "🗺️", label: "Carte du voyage" },
@@ -25,6 +27,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const streak = useAppStore((s) => s.streak);
   const theme = useAppStore((s) => s.theme);
   const setTheme = useAppStore((s) => s.setTheme);
+  const gate = useLoginGate();
 
   const total = totalExerciseCount();
   const done = completedCount(completed);
@@ -103,7 +106,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                             : { borderColor: "var(--line-strong)", background: "var(--paper)", color: "var(--ink-faint)" }
                         }
                       >
-                        {done2 ? "✓" : !unlocked ? "🔒" : ""}
+                        {done2 ? "✓" : !unlocked ? "🔒" : gate.mustSignIn(ch.id) ? "🔐" : ""}
                       </span>
                       <span>{ch.title}</span>
                     </>
@@ -154,6 +157,41 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+/** Top-bar shortcuts (phones), opposite the logo: light/dark switch + Réglages. */
+function TopBarActions() {
+  const theme = useAppStore((s) => s.theme);
+  const setTheme = useAppStore((s) => s.setTheme);
+  const route = useAppStore((s) => s.route);
+  const shown = useResolvedTheme(theme);
+  const next = shown === "dark" ? "light" : "dark";
+  const buttonClass = "w-[38px] h-[38px] rounded-[9px] border flex items-center justify-center text-[17px] no-underline";
+  const buttonStyle = { borderColor: "var(--line-strong)", background: "var(--paper)", color: "var(--ink)" };
+
+  return (
+    <div className="ml-auto flex items-center gap-2">
+      <button
+        aria-label={next === "dark" ? "Passer au thème sombre" : "Passer au thème clair"}
+        title={next === "dark" ? "Thème sombre" : "Thème clair"}
+        onClick={() => setTheme(next)}
+        className={buttonClass}
+        style={buttonStyle}
+      >
+        {shown === "dark" ? "☀️" : "🌙"}
+      </button>
+      <AppLink
+        to="reglages"
+        aria-label="Réglages"
+        title="Réglages"
+        aria-current={route.view === "reglages" ? "page" : undefined}
+        className={buttonClass}
+        style={route.view === "reglages" ? { ...buttonStyle, borderColor: "var(--accent)", background: "var(--accent-soft)" } : buttonStyle}
+      >
+        ⚙️
+      </AppLink>
+    </div>
+  );
+}
+
 export function Sidebar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const collapsed = useAppStore((s) => s.sidebarCollapsed);
@@ -171,6 +209,7 @@ export function Sidebar() {
           ☰
         </button>
         <span className="font-display text-base font-semibold">CaMI</span>
+        <TopBarActions />
       </div>
 
       {drawerOpen && (

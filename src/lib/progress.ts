@@ -2,7 +2,7 @@
 // closure-over-a-global-`state` versions into explicit, testable functions that take the
 // relevant state as an argument. Small and easy to verify by inspection.
 import { CURRICULUM, PHASE_ORDER } from "./curriculum";
-import type { Badge, BadgeCheckContext, Chapter, Phase } from "./types";
+import type { Badge, BadgeCheckContext, Chapter, Gender, Phase } from "./types";
 
 export type FlatEntry = { phase: Phase; chapter: Chapter; indexInPhase: number };
 
@@ -54,6 +54,14 @@ export function isChapterUnlocked(chapterId: string, completed: Record<string, b
   return chapterDone(flat[idx - 1].chapter, completed);
 }
 
+/** Chapters open without an account; from the next one on, Google sign-in is required. */
+export const FREE_CHAPTER_COUNT = 1;
+
+export function chapterNeedsAccount(chapterId: string): boolean {
+  const idx = flatChapters().findIndex((x) => x.chapter.id === chapterId);
+  return idx >= FREE_CHAPTER_COUNT;
+}
+
 export function nextChapterAfter(chapterId: string): Chapter | null {
   const flat = flatChapters();
   const idx = flat.findIndex((x) => x.chapter.id === chapterId);
@@ -82,7 +90,7 @@ export const BADGES: Badge[] = [
     check: (ctx) => completedCount(ctx.completed) >= 1 },
   { id: "sans-faute", icon: "🎯", title: "Sans faute", desc: "Réussir un exercice du tout premier coup.",
     check: (ctx) => Object.values(ctx.passAttempts).some((a) => a === 0) },
-  { id: "perseverant", icon: "💪", title: "Persévérant·e", desc: "Réussir un exercice après plusieurs essais, sans lâcher.",
+  { id: "perseverant", icon: "💪", title: "Persévérant·e", titles: { m: "Persévérant", f: "Persévérante" }, desc: "Réussir un exercice après plusieurs essais, sans lâcher.",
     check: (ctx) => Object.values(ctx.passAttempts).some((a) => a >= 3) },
   { id: "premier-chapitre", icon: "📘", title: "Premier chapitre", desc: "Terminer un chapitre entier.",
     check: (ctx) => flatChapters().some((x) => chapterDone(x.chapter, ctx.completed)) },
@@ -94,7 +102,7 @@ export const BADGES: Badge[] = [
     check: (ctx) => CURRICULUM.python.chapters.every((c: Chapter) => chapterDone(c, ctx.completed)) },
   { id: "avance-maitrise", icon: "🧩", title: "Python avancé", desc: "Terminer toute la partie Python avancé.",
     check: (ctx) => CURRICULUM.avance.chapters.every((c: Chapter) => chapterDone(c, ctx.completed)) },
-  { id: "ia-explorer", icon: "🤖", title: "Explorateur·rice IA", desc: "Terminer toute la partie Intelligence artificielle.",
+  { id: "ia-explorer", icon: "🤖", title: "Explorateur·rice IA", titles: { m: "Explorateur IA", f: "Exploratrice IA" }, desc: "Terminer toute la partie Intelligence artificielle.",
     check: (ctx) => CURRICULUM.ia.chapters.every((c: Chapter) => chapterDone(c, ctx.completed)) },
   { id: "parcours-complet", icon: "🏆", title: "Parcours complet", desc: `Terminer les ${totalExerciseCount()} exercices de CaMI.`,
     check: (ctx) => completedCount(ctx.completed) >= totalExerciseCount() },
@@ -103,6 +111,12 @@ export const BADGES: Badge[] = [
   { id: "streak-7", icon: "⚡", title: "Une semaine de suite", desc: "Revenir 7 jours d'affilée.",
     check: (ctx) => ctx.streak >= 7 },
 ];
+
+/** Badge title agreeing with the learner's choice (inclusive form when none). */
+export function badgeTitle(badge: Badge, gender: Gender): string {
+  if (gender && badge.titles) return badge.titles[gender];
+  return badge.title;
+}
 
 export function evaluateBadges(ctx: BadgeCheckContext, earnedBadges: Record<string, boolean>): Badge[] {
   const newlyEarned: Badge[] = [];

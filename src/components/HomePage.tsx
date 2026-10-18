@@ -9,6 +9,7 @@ import { PART_META } from "@/lib/partMeta";
 import { chapterDone, completedCount, firstUnfinishedChapterId, isChapterUnlocked, phaseProgress, totalExerciseCount } from "@/lib/progress";
 import { Mascot } from "./Mascot";
 import type { Chapter } from "@/lib/types";
+import { accord } from "@/lib/genre";
 
 const container: Variants = {
   hidden: {},
@@ -33,6 +34,7 @@ const letterPop: Variants = {
 export function HomePage() {
   const completed = useAppStore((s) => s.completed);
   const name = useAppStore((s) => s.name);
+  const gender = useAppStore((s) => s.gender);
   const goTo = useAppStore((s) => s.goTo);
 
   const total = totalExerciseCount();
@@ -105,7 +107,7 @@ export function HomePage() {
 
         <motion.div variants={item} className="max-w-[42ch]">
           <h1 className="text-[clamp(28px,4.2vw,42px)] leading-[1.1]">
-            {name ? `Salut ${name}, prêt·e à coder ?` : "Apprends à coder, puis apprivoise l'IA"}
+            {name ? `Salut ${name}, ${accord(gender, "prêt", "prête", "prêt·e")} à coder ?` : "Apprends à coder, puis apprivoise l'IA"}
           </h1>
           <p className="text-[17.5px] mt-4" style={{ color: "var(--ink-soft)" }}>
             Un parcours simple et ludique, en petites étapes : de la toute première variable jusqu&apos;à construire tes propres mini-intelligences artificielles — pas de jargon, que du concret, à ton rythme.

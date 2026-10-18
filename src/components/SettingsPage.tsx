@@ -4,10 +4,14 @@ import { useState } from "react";
 import { useAppStore } from "@/store/useAppStore";
 import { AccountCard } from "./AccountCard";
 import { InstallCard } from "./InstallCard";
+import { GenderChoice } from "./GenderChoice";
+import { accord } from "@/lib/genre";
 
 export function SettingsPage() {
   const name = useAppStore((s) => s.name);
   const setName = useAppStore((s) => s.setName);
+  const gender = useAppStore((s) => s.gender);
+  const setGender = useAppStore((s) => s.setGender);
   const theme = useAppStore((s) => s.theme);
   const setTheme = useAppStore((s) => s.setTheme);
   const soundOn = useAppStore((s) => s.soundOn);
@@ -37,6 +41,8 @@ export function SettingsPage() {
           />
           <button className="btn-primary btn-sm" onClick={() => setName(draft.trim() || null)}>Enregistrer</button>
         </div>
+        <p className="text-[13.5px] mt-4 mb-2" style={{ color: "var(--ink-soft)" }}>Comment veux-tu que l&apos;appli s&apos;adresse à toi ?</p>
+        <GenderChoice value={gender} onChange={setGender} />
       </div>
 
       <div className="rounded-(--radius) border px-6 py-5 max-w-[640px] mb-5" style={{ background: "var(--paper)", borderColor: "var(--line)" }}>
@@ -72,7 +78,7 @@ export function SettingsPage() {
           </button>
         ) : (
           <div className="flex items-center gap-2.5">
-            <span className="text-[13.5px]" style={{ color: "var(--error)" }}>Tu es sûr·e ?</span>
+            <span className="text-[13.5px]" style={{ color: "var(--error)" }}>Tu es {accord(gender, "sûr", "sûre", "sûr·e")} ?</span>
             <button className="btn-primary btn-sm" style={{ background: "var(--error)" }} onClick={() => { resetProgress(); setConfirmReset(false); }}>Oui, tout effacer</button>
             <button className="btn-ghost btn-sm" onClick={() => setConfirmReset(false)}>Annuler</button>
           </div>

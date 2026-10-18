@@ -237,12 +237,13 @@ clé Mongo dangereuse (`.`, `$`) → 400) et limite le corps à 1 Mo. Si tu ajou
 `AppState` qui doit suivre le compte, ajoute-le **à la fois** dans `*_KEYS` **et** dans le
 schéma correspondant (TS t'y oblige via `Record<keyof …, Check>`).
 
-**Synchro** (`CloudSync.tsx`) : pull une fois par connexion (le serveur gagne pour chaque
-document qui existe ; un document absent est créé à partir de l'état local). Ensuite, push
-débouncé à 1 s, et seulement du ou des documents dont le JSON a changé. Aucun push n'a lieu
-avant la fin du pull (`readyForUser`), pour ne pas écraser le compte avec l'état local. Il n'y
-a pas de fusion bidirectionnelle : si deux appareils modifient hors-ligne en parallèle, le
-dernier push gagne.
+**Synchro** (`CloudSync.tsx`) : pull une fois par connexion. Depuis le 2026-10-18, la
+progression de l'appareil et celle du compte sont **fusionnées** (`mergeProgress`), et les
+préférences prennent la valeur du compte champ par champ (voir « Ajouts du 2026-10-18 ») ; le
+résultat est renvoyé au compte. Ensuite, push débouncé à 1 s, et seulement du ou des documents
+dont le JSON a changé. Aucun push n'a lieu avant la fin du pull (`readyForUser`). Une fois
+connecté, si deux appareils modifient hors-ligne en parallèle, le dernier push gagne : la
+fusion n'a lieu qu'à la connexion.
 
 **Tableau de bord admin** (enrichi le 2026-10-15) : toute nouvelle page sous `/admin` doit
 appeler `checkAdminAccess()` (`admin/access.ts`) en premier. La page de détail n'affiche les
@@ -293,6 +294,39 @@ périmètre de la réécriture gérable. L'auto-complétion (point 2) a depuis �
 
 Si l'utilisateur demande l'une de ces trois choses, ce sont des ajouts nets, pas des bugs à
 corriger.
+
+## Ajouts du 2026-10-18
+
+- **Accord des textes** : préférence `gender` (`"f"` | `"m"` | `null` = formes inclusives
+  « prêt·e »), demandée dans la fenêtre de bienvenue et modifiable dans Réglages
+  (`GenderChoice`), synchronisée (`PREFERENCE_KEYS` + schéma). Utilise `accord()` (`lib/genre.ts`)
+  pour tout nouveau texte qui s'adresse à l'élève, et `titles` + `badgeTitle()` pour un badge
+  genré. Les textes du cours (`curriculum.ts`) ne s'adressent jamais à l'élève de façon genrée :
+  rien à y faire.
+- **Barre du haut (téléphone)** : bouton thème clair/sombre (bascule selon le thème
+  *affiché* — `useResolvedTheme`, `lib/theme.ts`) et ⚙️ Réglages, à droite du logo.
+- **Écran de lancement** (`SplashScreen`) : une fois par lancement (`sessionStorage`, donc ni au
+  rechargement ni à la navigation), au moins 1,9 s (0,5 s si mouvement réduit) et jusqu'à la fin
+  de l'hydratation. La page n'est montée qu'après, pour que son animation d'entrée soit visible.
+- **Connexion obligatoire après le 1er chapitre** (`FREE_CHAPTER_COUNT`,
+  `chapterNeedsAccount`, `useLoginGate` dans `lib/loginGate.ts`, `LoginWall`). Elle ne
+  s'applique que si le backend est configuré **et** l'appareil en ligne : hors-ligne, on ne
+  peut pas se connecter, et l'app installée doit rester utilisable. Ce n'est pas une mesure de
+  sécurité (tout le cours est dans le bundle client), c'est une étape du parcours.
+- **Fusion à la connexion** (`mergeProgress`, `lib/cloud/shape.ts`), au lieu de « le serveur
+  écrase le local » : indispensable dès que la connexion est imposée en cours de route, sinon
+  un compte existant mais vide effaçait le chapitre 1 fait sans compte. Préférences : le compte
+  gagne champ par champ, l'appareil complète. Après chaque connexion, le résultat fusionné est
+  renvoyé au compte.
+- **Déconnexion = appareil vidé** (ordinateurs partagés : sinon la fusion ferait passer la
+  progression d'un élève dans le compte du suivant). `AccountCard.signOutSafely` : PUT de l'état
+  courant d'abord (en cas d'échec, message et option « quand même »), puis
+  `setUser(null)` **avant** `resetProgress()`. L'ordre compte : sinon le push débouncé de
+  CloudSync enverrait l'état vide au compte pendant la redirection.
+- Tests (jetables, hors repo) : 21 vérifications de logique ; 31 dans le navigateur, avec la
+  session et `/api/me` **simulés dans le navigateur** (`page.route`) pour ne rien écrire dans
+  Atlas. Piège de test : `addInitScript(fn)` envoie le *source* de la fonction, sans ses
+  variables capturées ; un état initial doit passer par `addInitScript(fn, arg)`.
 
 ## Déploiement Docker (ajouté le 2026-10-17)
 
