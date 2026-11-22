@@ -13,7 +13,7 @@ async function loadDashboard() {
     // An ObjectId embeds its creation time: sorting on _id = newest accounts first.
     users.find({}, { projection: { name: 1, email: 1, role: 1 } }).sort({ _id: -1 }).toArray(),
     progress
-      .find({}, { projection: { completed: 1, passAttempts: 1, code: 1, streak: 1, bestStreak: 1, updatedAt: 1 } })
+      .find({}, { projection: { completed: 1, passAttempts: 1, code: 1, streak: 1, bestStreak: 1, updatedAt: 1, usedSolution: 1 } })
       .toArray(),
     preferences.find({}, { projection: { name: 1 } }).toArray(),
   ]);
@@ -90,7 +90,7 @@ export default async function AdminPage() {
           <Card>
             <table className="w-full text-[13.5px] border-collapse min-w-[680px]">
               <thead>
-                <HeadRow columns={["Exercice", "Bloqué·es", "Réussi", "Essais ratés (moy.)", "Du 1er coup"]} />
+                <HeadRow columns={["Exercice", "Bloqué·es", "Réussi", "Essais ratés (moy.)", "Du 1er coup", "Avec solution"]} />
               </thead>
               <tbody>
                 {hardest.map((s) => (
@@ -112,6 +112,9 @@ export default async function AdminPage() {
                     </td>
                     <td className="px-4 py-3" style={{ color: "var(--ink-soft)" }}>
                       {s.passed ? `${Math.round((s.firstTry / s.passed) * 100)}%` : "—"}
+                    </td>
+                    <td className="px-4 py-3 font-semibold" style={{ color: s.withSolution ? "var(--warn)" : "var(--ink-faint)" }}>
+                      {s.withSolution}
                     </td>
                   </tr>
                 ))}
