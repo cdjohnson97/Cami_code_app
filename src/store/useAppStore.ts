@@ -30,6 +30,8 @@ type Store = AppState & {
   registerAttempt: (exerciseId: string) => number;
   recordFailedAttempt: (exerciseId: string) => void;
   recordUsedSolution: (exerciseId: string) => void;
+  recordUsedPaste: (exerciseId: string) => void;
+  clearUsedPaste: (exerciseId: string) => void;
   retryExercise: (exerciseId: string, starterCode: string) => void;
   completeExercise: (exerciseId: string, chapterId: string) => void;
   clearLastEarnedBadges: () => void;
@@ -56,6 +58,7 @@ const initialAppState: AppState = {
   passAttempts: {},
   failedAttempts: {},
   usedSolution: {},
+  usedPaste: {},
   earnedBadges: {},
   streak: 0,
   bestStreak: 0,
@@ -133,12 +136,29 @@ export const useAppStore = create<Store>()(
           },
         })),
 
+      recordUsedPaste: (exerciseId) =>
+        set((s) => ({
+          usedPaste: {
+            ...s.usedPaste,
+            [exerciseId]: true,
+          },
+        })),
+
+      clearUsedPaste: (exerciseId) =>
+        set((s) => {
+          const next = { ...s.usedPaste };
+          delete next[exerciseId];
+          return { usedPaste: next };
+        }),
+
       retryExercise: (exerciseId, starterCode) =>
         set((s) => {
           const nextCompleted = { ...s.completed };
           delete nextCompleted[exerciseId];
           const nextUsedSolution = { ...s.usedSolution };
           delete nextUsedSolution[exerciseId];
+          const nextUsedPaste = { ...s.usedPaste };
+          delete nextUsedPaste[exerciseId];
           const nextPassAttempts = { ...s.passAttempts };
           delete nextPassAttempts[exerciseId];
           const nextFailedAttempts = { ...s.failedAttempts };
@@ -148,6 +168,7 @@ export const useAppStore = create<Store>()(
           return {
             completed: nextCompleted,
             usedSolution: nextUsedSolution,
+            usedPaste: nextUsedPaste,
             passAttempts: nextPassAttempts,
             failedAttempts: nextFailedAttempts,
             code: { ...s.code, [exerciseId]: starterCode },
@@ -164,7 +185,7 @@ export const useAppStore = create<Store>()(
         if (already) return;
         const s = get();
         const newly = evaluateBadges(
-          { completed: s.completed, passAttempts: s.passAttempts, streak: s.streak, usedSolution: s.usedSolution },
+          { completed: s.completed, passAttempts: s.passAttempts, streak: s.streak, usedSolution: s.usedSolution, usedPaste: s.usedPaste },
           s.earnedBadges
         );
         if (newly.length) {

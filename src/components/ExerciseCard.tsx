@@ -22,12 +22,15 @@ export function ExerciseCard({
 }) {
   const completed = useAppStore((s) => s.completed[ex.id]);
   const usedSolution = useAppStore((s) => s.usedSolution[ex.id]);
+  const usedPaste = useAppStore((s) => s.usedPaste[ex.id]);
   const failedCount = useAppStore((s) => s.failedAttempts[ex.id] || 0);
   const savedCode = useAppStore((s) => s.code[ex.id]);
   const saveCode = useAppStore((s) => s.saveCode);
   const registerAttempt = useAppStore((s) => s.registerAttempt);
   const recordFailedAttempt = useAppStore((s) => s.recordFailedAttempt);
   const recordUsedSolution = useAppStore((s) => s.recordUsedSolution);
+  const recordUsedPaste = useAppStore((s) => s.recordUsedPaste);
+  const clearUsedPaste = useAppStore((s) => s.clearUsedPaste);
   const retryExercise = useAppStore((s) => s.retryExercise);
   const completeExercise = useAppStore((s) => s.completeExercise);
 
@@ -38,6 +41,7 @@ export function ExerciseCard({
   const [revealedHints, setRevealedHints] = useState(0);
   const [solutionOpen, setSolutionOpen] = useState(usedSolution ?? false);
   const [confirmingSolution, setConfirmingSolution] = useState(false);
+  const [pasteWarning, setPasteWarning] = useState(false);
   const [altShown, setAltShown] = useState(false);
 
   function updateCode(v: string) {
@@ -90,9 +94,16 @@ export function ExerciseCard({
     setConsoleErr(null);
     setSolutionOpen(false);
     setConfirmingSolution(false);
+    setPasteWarning(false);
     setRevealedHints(0);
   }
 
+  function handlePasteCode() {
+    recordUsedPaste(ex.id);
+    setPasteWarning(true);
+  }
+
+  const isWithAid = !!(usedSolution || usedPaste);
   const highlightedSolution = useMemo(() => highlightCode(ex.solution, langKey), [ex.solution, langKey]);
 
   return (
@@ -102,20 +113,20 @@ export function ExerciseCard({
     >
       <div className="flex items-start gap-3 px-5 pt-4 pb-1">
         <motion.div
-          key={completed ? (usedSolution ? "done-aid" : "done-pure") : "todo"}
+          key={completed ? (usedSolution ? "done-sol" : usedPaste ? "done-paste" : "done-pure") : "todo"}
           initial={completed ? { scale: 0.4, opacity: 0 } : false}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 400, damping: 18 }}
           className="flex-none w-7 h-7 rounded-full border-[1.5px] flex items-center justify-center font-mono text-[12.5px] mt-0.5"
           style={
             completed
-              ? usedSolution
+              ? isWithAid
                 ? { background: "var(--warn)", borderColor: "var(--warn)", color: "var(--warn-ink)" }
                 : { background: "var(--success)", borderColor: "var(--success)", color: "var(--paper)" }
               : { borderColor: "var(--line-strong)", color: "var(--ink-faint)" }
           }
         >
-          {completed ? (usedSolution ? "💡" : "✓") : index + 1}
+          {completed ? (usedSolution ? "💡" : usedPaste ? "📋" : "✓") : index + 1}
         </motion.div>
         <div className="flex-1">
           <div className="flex items-center gap-2.5 flex-wrap mb-1">
@@ -124,12 +135,12 @@ export function ExerciseCard({
               <span
                 className="font-mono text-[10.5px] uppercase tracking-wider px-2 py-0.5 rounded-[5px]"
                 style={
-                  usedSolution
+                  isWithAid
                     ? { background: "var(--warn-soft)", color: "var(--warn-ink)" }
                     : { background: "var(--success-soft)", color: "var(--success)" }
                 }
               >
-                {usedSolution ? "Validé avec solution" : "Validé en autonomie"}
+                {usedSolution ? "Validé avec solution" : usedPaste ? "Validé (code collé)" : "Validé en autonomie"}
               </span>
             )}
           </div>
@@ -141,13 +152,15 @@ export function ExerciseCard({
         </div>
       </div>
 
-      {completed && usedSolution && (
+      {completed && isWithAid && (
         <div
           className="mx-5 mt-3 rounded-[9px] border px-4 py-2.5 flex items-center justify-between gap-3 flex-wrap text-[13px]"
           style={{ background: "var(--warn-soft)", borderColor: "var(--line)", color: "var(--warn-ink)" }}
         >
           <span>
-            Cet exercice a été validé avec la solution. Tu peux le refaire seul·e pour obtenir la pastille verte 100% autonome !
+            {usedSolution
+              ? "Cet exercice a été validé avec la solution. Tu peux le refaire seul·e pour obtenir la pastille verte 100% autonome !"
+              : "Cet exercice a été validé avec un bloc de code collé. Tu peux le refaire en tapant le code toi-même pour obtenir la pastille verte 100% autonome !"}
           </span>
           <button
             className="btn-ghost btn-sm"
@@ -160,8 +173,48 @@ export function ExerciseCard({
       )}
 
       <div className="mt-3.5 mx-5">
-        <CodeEditor value={code} onChange={updateCode} lang={langKey} />
+        <CodeEditor value={code} onChange={updateCode} lang={langKey} onPasteCode={handlePasteCode} />
       </div>
+
+      {pasteWarning && !completed && (
+        <div
+          className="mx-5 mt-3 rounded-[10px] p-4 border"
+          style={{ borderColor: "var(--warn)", background: "var(--warn-soft)", color: "var(--warn-ink)" }}
+        >
+          <div className="flex items-start gap-3">
+            <span className="text-xl leading-none mt-0.5">📋</span>
+            <div className="flex-1">
+              <p className="text-[13.5px] font-bold mb-1">
+                Bloc de code collé détecté
+              </p>
+              <p className="text-[13px] leading-relaxed mb-3">
+                Retaper le code au clavier est essentiel pour mémoriser la syntaxe et la logique.
+                Si tu valides avec ce code, l&apos;exercice sera enregistré avec la mention <strong>« Code collé »</strong> et les badges de réussite autonome (ex. <em>Sans faute</em>) ne seront pas accordés.
+              </p>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <button
+                  className="btn-primary btn-sm"
+                  onClick={() => {
+                    updateCode(ex.starter);
+                    clearUsedPaste(ex.id);
+                    setPasteWarning(false);
+                    setFeedback(null);
+                  }}
+                >
+                  ↺ Effacer et retaper moi-même
+                </button>
+                <button
+                  className="btn-ghost btn-sm"
+                  style={{ background: "var(--paper)", borderColor: "var(--line)" }}
+                  onClick={() => setPasteWarning(false)}
+                >
+                  Garder ce code (mention &quot;Code collé&quot;)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center gap-2.5 px-5 pt-3 pb-4 flex-wrap">
         <button onClick={handleCheck} className="btn-primary">Vérifier</button>

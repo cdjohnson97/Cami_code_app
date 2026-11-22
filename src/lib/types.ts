@@ -60,6 +60,7 @@ export type BadgeCheckContext = {
   passAttempts: Record<string, number>;
   streak: number;
   usedSolution?: Record<string, boolean>;
+  usedPaste?: Record<string, boolean>;
 };
 
 export type GlossaryEntry = {
@@ -84,6 +85,7 @@ export type AppState = {
   passAttempts: Record<string, number>;
   failedAttempts: Record<string, number>;
   usedSolution: Record<string, boolean>;
+  usedPaste: Record<string, boolean>;
   earnedBadges: Record<string, boolean>;
   streak: number;
   bestStreak: number;
