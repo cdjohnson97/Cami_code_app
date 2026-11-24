@@ -9,6 +9,7 @@ import { PART_META } from "@/lib/partMeta";
 import { chapterDone, completedCount, firstUnfinishedChapterId, isChapterUnlocked, phaseProgress, totalExerciseCount } from "@/lib/progress";
 import { Mascot } from "./Mascot";
 import { PartIllustration } from "./PartIllustration";
+import { FeaturesSection } from "./FeaturesSection";
 import type { Chapter } from "@/lib/types";
 import { accord } from "@/lib/genre";
 
@@ -234,7 +235,9 @@ export function HomePage() {
             );
           })}
         </div>
-      </motion.div>
+        </motion.div>
+
+        <FeaturesSection />
     </div>
   );
 }
