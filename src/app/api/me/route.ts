@@ -25,13 +25,16 @@ export async function GET() {
 
   const { users, progress, preferences } = collections();
   const [user, progressDoc, preferencesDoc] = await Promise.all([
-    users.findOne({ _id: userId }, { projection: { role: 1 } }),
+    users.findOne({ _id: userId }, { projection: { role: 1, classId: 1, name: 1, email: 1 } }),
     progress.findOne({ _id: userId }, { projection: { _id: 0, updatedAt: 0 } }),
     preferences.findOne({ _id: userId }, { projection: { _id: 0, updatedAt: 0 } }),
   ]);
 
   return Response.json({
     role: user?.role ?? "student",
+    classId: user?.classId?.toHexString() ?? null,
+    name: user?.name ?? null,
+    email: user?.email ?? null,
     progress: progressDoc,
     preferences: preferencesDoc,
   });

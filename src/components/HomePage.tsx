@@ -8,6 +8,7 @@ import { PHASE_ORDER, CURRICULUM } from "@/lib/curriculum";
 import { PART_META } from "@/lib/partMeta";
 import { chapterDone, completedCount, firstUnfinishedChapterId, isChapterUnlocked, phaseProgress, totalExerciseCount } from "@/lib/progress";
 import { Mascot } from "./Mascot";
+import { PartIllustration } from "./PartIllustration";
 import type { Chapter } from "@/lib/types";
 import { accord } from "@/lib/genre";
 
@@ -66,7 +67,7 @@ export function HomePage() {
               animate={{ rotate: [0, -4, 4, -2, 0] }}
               transition={{ duration: 2.4, repeat: Infinity, repeatDelay: 3, ease: "easeInOut", delay: 0.6 }}
             >
-              <Mascot mood={heroMood} size={92} />
+              <Mascot mood={heroMood} size={140} />
             </motion.div>
           </motion.div>
           <motion.div
@@ -124,14 +125,30 @@ export function HomePage() {
         {started && (
           <motion.div
             variants={item}
-            className="mt-7 max-w-[420px] w-full rounded-(--radius) border px-5 py-4"
+            className="mt-7 max-w-[440px] w-full rounded-(--radius) border px-5 py-4"
             style={{ background: "var(--paper)", borderColor: "var(--line)", boxShadow: "var(--shadow)" }}
           >
-            <div className="flex justify-between text-[13px] mb-2" style={{ color: "var(--ink-soft)" }}>
-              <span>Progression globale</span><span>{done}/{total} exercices</span>
+            <div className="flex justify-between text-[13px] mb-3" style={{ color: "var(--ink-soft)" }}>
+              <span className="font-semibold">Progression globale</span>
+              <span className="font-mono text-xs">{done}/{total} exercices ({pct}%)</span>
             </div>
-            <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--line)" }}>
-              <motion.div className="h-full rounded-full" style={{ background: "var(--accent)" }} initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.7, ease: "easeOut" }} />
+            <div className="relative h-2.5 rounded-full overflow-visible mb-1" style={{ background: "var(--line)" }}>
+              <motion.div
+                className="h-full rounded-full"
+                style={{ background: "var(--accent)" }}
+                initial={{ width: 0 }}
+                animate={{ width: `${pct}%` }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              />
+              <motion.div
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none"
+                style={{ left: `${pct}%` }}
+                initial={{ left: 0 }}
+                animate={{ left: `${pct}%` }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              >
+                <Mascot mood={pct === 100 ? "celebrate" : "happy"} size={28} interactive={false} />
+              </motion.div>
             </div>
           </motion.div>
         )}
@@ -166,29 +183,36 @@ export function HomePage() {
                 key={pid}
                 variants={item}
                 onClick={() => phaseUnlocked && firstChapterId && goTo(firstUnfinishedInPhase(pid, completed) || firstChapterId)}
-                whileHover={phaseUnlocked ? { y: -3 } : undefined}
+                whileHover={phaseUnlocked ? { y: -4, scale: 1.01 } : undefined}
+                whileTap={phaseUnlocked ? { scale: 0.98 } : undefined}
                 disabled={!phaseUnlocked}
-                className="text-left rounded-(--radius) border p-5 flex flex-col gap-3 relative overflow-hidden"
+                className="text-left rounded-(--radius) border p-5 flex flex-col gap-3 relative overflow-hidden transition-shadow hover:shadow-lg"
                 style={{
                   background: "var(--paper)",
                   borderColor: "var(--line)",
                   boxShadow: "var(--shadow)",
                   cursor: phaseUnlocked ? "pointer" : "not-allowed",
-                  opacity: phaseUnlocked ? 1 : 0.6,
+                  opacity: phaseUnlocked ? 1 : 0.65,
                 }}
               >
-                <div className="absolute top-0 left-0 right-0 h-1" style={{ background: meta.color }} />
+                <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: meta.color }} />
                 <div className="flex items-center justify-between">
                   <span
-                    className="w-11 h-11 rounded-full flex items-center justify-center text-xl flex-none"
+                    className="w-11 h-11 rounded-full flex items-center justify-center text-xl flex-none shadow-sm"
                     style={{ background: meta.soft }}
                   >
                     {phaseDone ? "✓" : meta.icon}
                   </span>
-                  <span className="font-mono text-[11px] uppercase tracking-wide" style={{ color: "var(--ink-faint)" }}>
+                  <span className="font-mono text-[11px] uppercase tracking-wide font-semibold" style={{ color: "var(--ink-faint)" }}>
                     {phase.label}
                   </span>
                 </div>
+
+                {/* Illustration personnifiée animée au centre de la carte */}
+                <div className="flex justify-center items-center py-2">
+                  <PartIllustration phaseId={pid} size={118} interactive={phaseUnlocked} />
+                </div>
+
                 <div>
                   <h3 className="text-lg font-bold" style={{ color: "var(--ink)" }}>{phase.shortLabel}</h3>
                   <p className="text-[13.5px] leading-relaxed mt-1" style={{ color: "var(--ink-soft)" }}>{meta.tagline}</p>
@@ -199,13 +223,13 @@ export function HomePage() {
                       <div className="h-full rounded-full" style={{ width: `${prog.pct}%`, background: meta.color }} />
                     </div>
                   ) : (
-                    <span className="text-xs" style={{ color: "var(--ink-faint)" }}>🔒 Se débloque après la partie précédente</span>
+                    <span className="text-xs font-medium" style={{ color: "var(--ink-faint)" }}>🔒 Se débloque après la partie précédente</span>
                   )}
                   {phaseUnlocked && (
-                    <span className="text-xs mt-1.5 block" style={{ color: "var(--ink-faint)" }}>{prog.done}/{prog.total} exercices</span>
+                    <span className="text-xs mt-1.5 block font-mono" style={{ color: "var(--ink-faint)" }}>{prog.done}/{prog.total} exercices</span>
                   )}
                 </div>
-                <span className="absolute -right-3 -bottom-4 text-[64px] opacity-[0.06] select-none" aria-hidden="true">{i + 1}</span>
+                <span className="absolute -right-3 -bottom-4 text-[64px] opacity-[0.05] select-none font-bold" aria-hidden="true">{i + 1}</span>
               </motion.button>
             );
           })}

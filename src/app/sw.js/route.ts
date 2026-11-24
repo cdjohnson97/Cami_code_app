@@ -23,7 +23,7 @@ const PAGE_CACHE = "cami-pages-" + VERSION;
 const ASSET_CACHE = "cami-assets-" + VERSION;
 const NETWORK_TIMEOUT_MS = 5000;
 
-const isAsset = (url) => url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/");
+const isAsset = (url) => url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/") || url.pathname.startsWith("/lottie/");
 
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {

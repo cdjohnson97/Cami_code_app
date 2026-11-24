@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { signIn, signOut } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import { cloudEnabled } from "@/lib/cloud/config";
+import { signOutSafely } from "@/lib/signOut";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useAppStore } from "@/store/useAppStore";
 import { accord } from "@/lib/genre";
-import { pickPreferences, pickProgress } from "@/lib/cloud/shape";
 
 export function AccountCard() {
   const user = useAuthStore((s) => s.user);
@@ -17,9 +17,25 @@ export function AccountCard() {
   const gender = useAppStore((s) => s.gender);
   const [redirecting, setRedirecting] = useState(false);
   const [signOutState, setSignOutState] = useState<"idle" | "saving" | "failed">("idle");
+  const [role, setRole] = useState<string | null>(null);
 
   // Silently absent when the project owner hasn't set up the backend yet — no broken UI for it.
   if (!cloudEnabled) return null;
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch("/api/me");
+        if (!r.ok) return;
+        const d = await r.json();
+        if (!cancelled) setRole(d.role ?? null);
+      } catch {
+        // role unknown — keep default
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   function signInWithGoogle() {
     setRedirecting(true);
@@ -27,29 +43,13 @@ export function AccountCard() {
   }
 
   /**
-   * Signing out wipes this device's progress (on a shared computer, the next learner must not
-   * inherit it — sign-in MERGES local progress into the account). So first make sure the latest
-   * state is saved on the account: the regular sync is debounced and may be a second behind.
+   * Signing out wipes this device's progress: `signOutSafely` first pushes the latest state to
+   * the account, then clears the local stores and the Auth.js session.
    */
-  async function signOutSafely(force = false) {
-    if (!force) {
-      setSignOutState("saving");
-      const state = useAppStore.getState();
-      const saved = await fetch("/api/me", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ progress: pickProgress(state), preferences: pickPreferences(state) }),
-      }).then((r) => r.ok, () => false);
-      if (!saved) {
-        setSignOutState("failed");
-        return;
-      }
-    }
-    // Order matters: forget the user FIRST, so CloudSync's debounced push (which only runs for
-    // a signed-in user) can't send the wiped, empty state to the account during the redirect.
-    useAuthStore.getState().setUser(null);
-    useAppStore.getState().resetProgress();
-    void signOut({ redirectTo: "/" });
+  async function handleSignOut(force = false) {
+    if (!force) setSignOutState("saving");
+    const ok = await signOutSafely({ force });
+    if (!ok) setSignOutState("failed");
   }
 
   return (
@@ -78,17 +78,20 @@ export function AccountCard() {
             {syncStatus === "idle" && "En attente"}
           </div>
           <div className="flex gap-2.5 flex-wrap">
-            <button className="btn-ghost btn-sm" disabled={signOutState === "saving"} onClick={() => void signOutSafely()}>
+            <button className="btn-ghost btn-sm" disabled={signOutState === "saving"} onClick={() => void handleSignOut()}>
               {signOutState === "saving" ? "Enregistrement…" : "Se déconnecter"}
             </button>
             {isAdmin && <Link className="btn-ghost btn-sm" href="/admin">Tableau de bord admin</Link>}
+            {role === "teacher" && <Link className="btn-ghost btn-sm" href="/enseignant">Mon espace enseignant</Link>}
+            {role === "student" && <Link className="btn-ghost btn-sm" href="/eleve">Mon espace élève</Link>}
+            {role === null && <Link className="btn-ghost btn-sm" href="/enseignant">Mon espace enseignant</Link>}
           </div>
           {signOutState === "failed" ? (
             <div className="mt-3 text-[13px]" style={{ color: "var(--error)" }}>
               Impossible d&apos;enregistrer ta progression sur ton compte (pas de connexion ?). Réessaie quand le
               réseau revient — en te déconnectant maintenant, ce qui n&apos;a pas encore été synchronisé serait perdu.
               <div className="mt-2">
-                <button className="btn-ghost btn-sm" onClick={() => void signOutSafely(true)}>Se déconnecter quand même</button>
+                <button className="btn-ghost btn-sm" onClick={() => void handleSignOut(true)}>Se déconnecter quand même</button>
               </div>
             </div>
           ) : (

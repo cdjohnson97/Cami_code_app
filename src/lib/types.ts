@@ -71,7 +71,17 @@ export type GlossaryEntry = {
   example?: Record<string, string>;
 };
 
-export type MascotMood = "idle" | "happy" | "wink" | "celebrate" | "think" | "wave";
+export type MascotMood =
+  | "idle"
+  | "happy"
+  | "wink"
+  | "celebrate"
+  | "think"
+  | "wave"
+  | "coding"
+  | "idea"
+  | "curious"
+  | "victory";
 
 /** How the app addresses the learner: "f" féminin, "m" masculin, null = inclusive forms (prêt·e). */
 export type Gender = "f" | "m" | null;
@@ -96,4 +106,5 @@ export type AppState = {
   sandboxLang: "pseudo" | "python";
   soundOn: boolean;
   completionDate: string | null;
+  classId: string | null;
 };

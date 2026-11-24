@@ -72,7 +72,11 @@ src/
     AppLink.tsx           Vrai lien <a href> vers une vue, navigation sur place au clic
     CloudSync.tsx          Toute la logique de synchro (session + pull/push via /api/me)
     AccountCard.tsx         UI de connexion Google / déconnexion dans Réglages
-    Mascot.tsx               Personnage SVG animé (Framer Motion)
+    Mascot.tsx               Personnage : wrapper (bulle, clic) + mascotte SVG Framer Motion.
+                              Choisit tout seul le rendu 3D ou SVG selon `size` et WebGL.
+    mascot3d/Mascot3D.tsx     Mascotte 3D procédurale (three.js / R3F) : marche, saut, regard
+                              qui suit la souris, clignement, humeurs — chargée en `lazy()`
+    LottiePlayer.tsx          Lecteur Lottie (lottie-react, `ssr:false`) pour public/lottie/*
     ChapterTravelOverlay.tsx  Animation de "voyage" entre deux chapitres
     ExerciseCard.tsx          Boucle d'interaction d'un exercice (éditeur, vérif, indices…)
     CodeEditor.tsx            Éditeur (textarea + coloration) avec suggestions et erreurs en
@@ -200,6 +204,16 @@ fichiers qui importent `CURRICULUM`.
   `/chapitre/…` **effaçait toute la progression locale**. D'où la route initiale appliquée dans
   le `.finally()` du rehydrate dans `AppShell`, juste avant `setHydrated()`. Vaut pour tout
   nouvel effet qui modifierait le store au montage.
+- **Carte « Compte » et mur de connexion absents** : ce n'est pas une régression du code, c'est
+  `cloudEnabled = false`. Le backend s'active seulement si les 4 variables (`MONGODB_URI`,
+  `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`) sont dans `.env.local` (ou si
+  `CAMI_CLOUD_ENABLED=true`). Ce fichier est ignoré par git : une copie du projet (zip, nouveau
+  dossier) peut le perdre **sans que `git status` le montre**. Un serveur déjà lancé garde
+  l'ancienne valeur en mémoire, donc le symptôme n'apparaît qu'au redémarrage. Réflexe avant de
+  chercher un bug de code : vérifier `.env.local`, lancer `npm run doctor` (présence des
+  variables + ping MongoDB), puis `GET /api/auth/providers` (200 avec `google` = actif ;
+  404 = désactivé). `npm run dev` exécute `scripts/check-env.mjs` (`predev`) qui affiche l'état,
+  et en développement Réglages montre un encart quand le backend est coupé.
 - **`motion.path` sans `d` initial** : dans `Mascot.tsx`, animer l'attribut `d` d'un `<path>`
   SVG via `animate={{ d: ... }}` sans jamais fournir de valeur initiale produisait une erreur
   console (`d="undefined"`, SVG invalide) au premier rendu. Fix : fournir `d` en statique *et*
@@ -208,6 +222,17 @@ fichiers qui importent `CURRICULUM`.
   `mt-5.5` (en dehors des paliers `.5` valides : seuls 0.5/1.5/2.5/3.5 existent par défaut) ne
   lèvent aucune erreur — elles ne font juste rien visuellement. Si un espacement semble ignoré
   quelque part, vérifie que la classe utilisée existe bien dans l'échelle Tailwind.
+- **Mascotte 3D (three.js) : lazy, jamais statique** : `three`, `@react-three/fiber` et
+  `@react-three/drei` pèsent lourd. `Mascot.tsx` garde le SVG comme rendu par défaut et comme
+  fallback (WebGL absent, erreur de contexte, `prefers-reduced-motion` reste supporté) ; le
+  composant 3D n'est importé que via `lazy()` dans `mascot3d/Mascot3D.tsx`, et seulement pour
+  les grandes tailles (`size >= 76`). Une seule `Canvas` par écran, `dpr` plafonné à 1.75, pas de
+  shadow map (fausse ombre de contact). Ne pas importer `three` depuis un composant partagé :
+  ça casserait le découpage de bundle et le rendu serveur.
+- **Lottie : JSON auto-hébergés** : `LottiePlayer.tsx` charge `lottie-react` en `ssr:false` et lit
+  les fichiers de `public/lottie/` (`chatbot.json`, `coding-desk.json`). Le service worker traite
+  `/lottie/` comme un asset (cache-first) : ne pas pointer vers un CDN LottieFiles, l'app doit
+  rester utilisable hors ligne.
 - **`next dev` régénère `AGENTS.md`/`CLAUDE.md`** avec un bloc de règles générique s'il ne les
   trouve pas déjà avec ce bloc présent. `AGENTS.md` (dans ce dossier) contient déjà ce bloc
   pour cette raison précise — **ne le supprime pas**, sinon `next dev` écrasera ce fichier
@@ -432,6 +457,7 @@ plus disponible, donc **conçus de zéro**, pas portés.
 
 ```bash
 npm install
+npm run doctor            # vérifie .env.local + ping MongoDB (à lancer en cas de doute)
 npm run dev              # http://localhost:3000
 npm run build             # build de prod (rapide, hors-ligne)
 npx tsc --noEmit           # vérif de types seule, plus rapide qu'un build complet

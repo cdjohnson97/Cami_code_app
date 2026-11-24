@@ -14,6 +14,8 @@ export function ChapterTravelOverlay() {
   const travel = useAppStore((s) => s.travelAnimation);
   const clearTravelAnimation = useAppStore((s) => s.clearTravelAnimation);
   const [reducedMotion, setReducedMotion] = useState(false);
+  // Switches from "walking in" to "waving hello" once the mascot has reached the badge.
+  const [arrived, setArrived] = useState(false);
 
   useEffect(() => {
     setReducedMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -25,6 +27,19 @@ export function ChapterTravelOverlay() {
     const t = window.setTimeout(() => clearTravelAnimation(), delay);
     return () => window.clearTimeout(t);
   }, [travel, reducedMotion, clearTravelAnimation]);
+
+  useEffect(() => {
+    if (!travel) {
+      setArrived(false);
+      return;
+    }
+    if (reducedMotion) {
+      setArrived(true);
+      return;
+    }
+    const t = window.setTimeout(() => setArrived(true), 1000);
+    return () => window.clearTimeout(t);
+  }, [travel, reducedMotion]);
 
   const entry = travel ? findChapterEntry(travel.toChapterId) : null;
   const icon = travel ? MAP_ICONS[travel.toChapterId] || "📍" : "📍";
@@ -48,13 +63,13 @@ export function ChapterTravelOverlay() {
           transition={{ duration: 0.4 }}
           className="fixed inset-0 z-[180] flex items-center justify-center overflow-hidden pointer-events-none"
           style={{
-            background: `radial-gradient(ellipse 65% 55% at 50% 48%, ${accentSoft} 0%, transparent 68%), color-mix(in srgb, var(--bg) 90%, transparent)`,
+            background: `radial-gradient(ellipse 65% 55% at 50% 48%, ${accentSoft} 0%, transparent 68%), color-mix(in srgb, var(--bg) 94%, transparent)`,
           }}
           aria-hidden="true"
         >
-          {/* a trail of little sparks lighting up in sequence along the path, like a comet tail */}
-          <div className="absolute left-0 right-0 top-[46%] mx-[9%] flex justify-between">
-            {Array.from({ length: 9 }, (_, i) => (
+          {/* the path the mascot just walked: little sparks lighting up in sequence behind it */}
+          <div className="absolute left-[7%] right-1/2 top-[42%] flex justify-between">
+            {Array.from({ length: 6 }, (_, i) => (
               <motion.span
                 key={i}
                 className="w-1.5 h-1.5 rounded-full"
@@ -63,34 +78,28 @@ export function ChapterTravelOverlay() {
                 animate={{ opacity: [0.12, 1, 0.12], scale: [0.5, 1.2, 0.5] }}
                 transition={{
                   duration: reducedMotion ? 0.1 : 0.9,
-                  delay: reducedMotion ? 0 : 0.15 + (i / 8) * 1.15,
+                  delay: reducedMotion ? 0 : 0.1 + (i / 5) * 0.95,
                   ease: "easeInOut",
                 }}
               />
             ))}
           </div>
 
-          {/* the mascot hops along a gentle arc from one side to the other, tilting into the turn */}
+          {/* CaMI walks in from the left, then stops and waves at the destination */}
           <motion.div
             className="absolute"
-            initial={{ left: "6%", top: "50%" }}
-            animate={{
-              left: "94%",
-              top: reducedMotion ? "50%" : ["50%", "48%", "30%", "48%", "50%"],
-            }}
-            transition={{
-              duration: reducedMotion ? 0.1 : 1.5,
-              ease: [0.4, 0.0, 0.2, 1],
-              top: reducedMotion ? undefined : { duration: 1.5, times: [0, 0.15, 0.5, 0.85, 1], ease: "easeInOut" },
-            }}
+            initial={{ left: "6%", top: "42%" }}
+            animate={{ left: "50%", top: "42%" }}
+            transition={{ duration: reducedMotion ? 0.1 : 1, ease: [0.33, 0, 0.2, 1] }}
             style={{ x: "-50%", y: "-50%" }}
           >
-            <motion.div
-              animate={{ rotate: reducedMotion ? 0 : [0, -10, 10, -6, 0], scale: reducedMotion ? 1 : [1, 1.1, 1] }}
-              transition={{ duration: 0.55, repeat: reducedMotion ? 0 : Infinity, ease: "easeInOut" }}
-            >
-              <Mascot mood="happy" size={72} interactive={false} />
-            </motion.div>
+            <Mascot
+              mood={arrived ? "wave" : "happy"}
+              size={120}
+              interactive={false}
+              variant="3d"
+              walking={!arrived && !reducedMotion}
+            />
           </motion.div>
 
           {/* destination badge: pops in with a spring once the mascot has mostly arrived, with a
@@ -98,8 +107,8 @@ export function ChapterTravelOverlay() {
           <motion.div
             initial={{ opacity: 0, scale: 0.4, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ delay: reducedMotion ? 0 : 1.05, duration: 0.5, type: "spring", stiffness: 260, damping: 17 }}
-            className="absolute bottom-[26%] flex flex-col items-center gap-2 text-center px-4"
+            transition={{ delay: reducedMotion ? 0 : 0.9, duration: 0.5, type: "spring", stiffness: 260, damping: 17 }}
+            className="absolute bottom-[20%] flex flex-col items-center gap-2 text-center px-4"
           >
             <motion.span
               className="flex items-center justify-center w-16 h-16 rounded-full text-3xl"
@@ -112,7 +121,7 @@ export function ChapterTravelOverlay() {
                       `0 0 0 14px color-mix(in srgb, ${accent} 0%, transparent)`,
                     ],
               }}
-              transition={{ delay: reducedMotion ? 0 : 1.1, duration: 1.1, repeat: reducedMotion ? 0 : Infinity, ease: "easeOut" }}
+              transition={{ delay: reducedMotion ? 0 : 1, duration: 1.1, repeat: reducedMotion ? 0 : Infinity, ease: "easeOut" }}
             >
               {icon}
             </motion.span>

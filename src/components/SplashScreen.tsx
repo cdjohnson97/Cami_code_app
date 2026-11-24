@@ -25,11 +25,22 @@ export function SplashScreen({ ready, onDone }: { ready: boolean; onDone: () => 
   const reduced = useReducedMotion();
   const minDuration = reduced ? MIN_DURATION_REDUCED_MS : MIN_DURATION_MS;
   const [minElapsed, setMinElapsed] = useState(false);
+  // CaMI walks in from the left, then stops and waves while the wordmark settles.
+  const [arrived, setArrived] = useState(false);
 
   useEffect(() => {
     const t = window.setTimeout(() => setMinElapsed(true), minDuration);
     return () => window.clearTimeout(t);
   }, [minDuration]);
+
+  useEffect(() => {
+    if (reduced) {
+      setArrived(true);
+      return;
+    }
+    const t = window.setTimeout(() => setArrived(true), 950);
+    return () => window.clearTimeout(t);
+  }, [reduced]);
 
   // Leave once the animation has played AND the app behind is ready (state restored).
   useEffect(() => {
@@ -52,26 +63,28 @@ export function SplashScreen({ ready, onDone }: { ready: boolean; onDone: () => 
       className="fixed inset-0 z-[300] flex flex-col items-center justify-center px-6"
       style={{ background: "var(--bg)" }}
     >
+      {/* Entrance: CaMI walks in from the left (legs animated by the 3D walk cycle), then waves. */}
       <motion.div
-        initial={reduced ? false : { opacity: 0, scale: 0.3, y: 30 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 260, damping: 13 }}
+        initial={reduced ? false : { opacity: 0, x: -180 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.95, ease: [0.3, 0, 0.2, 1] }}
       >
-        <motion.div
-          animate={reduced ? undefined : { y: [0, -8, 0] }}
-          transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-        >
-          <Mascot mood="wave" size={112} interactive={false} />
-        </motion.div>
+        <Mascot
+          mood={arrived ? "wave" : "happy"}
+          size={128}
+          interactive={false}
+          variant="3d"
+          walking={!arrived && !reduced}
+        />
       </motion.div>
 
       <div className="font-display text-[44px] font-bold tracking-tight leading-none flex mt-4" aria-hidden="true">
         {LETTERS.map((ch, i) => (
           <motion.span
             key={i}
-            initial={reduced ? false : { opacity: 0, y: 24, rotate: -12 }}
+            initial={reduced ? false : { opacity: 0, y: 18, rotate: -12 }}
             animate={{ opacity: 1, y: 0, rotate: 0 }}
-            transition={{ type: "spring", stiffness: 420, damping: 14, delay: 0.35 + i * 0.09 }}
+            transition={{ type: "spring", stiffness: 420, damping: 14, delay: reduced ? 0 : 1 + i * 0.09 }}
             style={i >= 2 ? { color: "var(--accent)" } : { color: "var(--ink)" }}
           >
             {ch}
@@ -82,8 +95,8 @@ export function SplashScreen({ ready, onDone }: { ready: boolean; onDone: () => 
       <motion.p
         initial={reduced ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.85, duration: 0.4 }}
-        className="font-mono text-[12px] tracking-wide uppercase font-semibold mt-3 text-center"
+        transition={{ delay: reduced ? 0 : 1.5, duration: 0.4 }}
+        className="font-mono text-[12px] tracking-wide uppercase font-semibold mt-5 text-center"
         style={{ color: "var(--accent)" }}
       >
         ton copilote pour apprendre à coder

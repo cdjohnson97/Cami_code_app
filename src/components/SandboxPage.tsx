@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAppStore } from "@/store/useAppStore";
 import { CodeEditor } from "./CodeEditor";
+import { LottiePlayer } from "./LottiePlayer";
 import AlgoEngine from "@/lib/algoEngine";
 
 const DEFAULTS: Record<string, string> = {
@@ -27,8 +28,17 @@ export function SandboxPage() {
 
   return (
     <div>
-      <h1 className="text-2xl mb-2">Bac à sable</h1>
-      <p className="text-[14.5px] mb-5" style={{ color: "var(--ink-soft)" }}>Un espace libre pour expérimenter, sans exercice à réussir.</p>
+      <div className="flex items-start justify-between gap-4 mb-5">
+        <div>
+          <h1 className="text-2xl mb-2">Bac à sable</h1>
+          <p className="text-[14.5px] m-0 max-w-[52ch]" style={{ color: "var(--ink-soft)" }}>Un espace libre pour expérimenter, sans exercice à réussir.</p>
+        </div>
+        <LottiePlayer
+          src="/lottie/coding-desk.json"
+          label="Quelqu'un code sur un ordinateur"
+          className="hidden sm:block w-[190px] shrink-0 -mt-5"
+        />
+      </div>
 
       <div className="flex gap-2 mb-4">
         {(["pseudo", "python"] as const).map((l) => (
