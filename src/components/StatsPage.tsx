@@ -74,20 +74,24 @@ export function StatsPage() {
         </div>
 
         <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ display: "block" }}>
+          {/* Aire sous la courbe (apparition progressive du bas vers le haut) */}
           <motion.path
             d={`M0,100 ${pathD} L100,100 Z`}
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
+            initial={{ opacity: 0, scaleY: 0 }}
+            animate={{ opacity: 1, scaleY: 1 }}
             transition={{ duration: 1.2, ease: "easeOut" }}
+            origin="50% 100%"
             style={{ fill: "color-mix(in srgb, var(--accent) 15%, transparent)" }}
           />
+          {/* Ligne de la courbe */}
           <motion.path
             d={pathD}
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 1.2, ease: "easeOut" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
             style={{ fill: "none", stroke: "var(--accent)", strokeWidth: 3 }}
           />
+          {/* Points sur la courbe (apparition séquentielle) */}
           {points.map((p, i) => (
             <motion.circle
               key={i}
@@ -97,7 +101,7 @@ export function StatsPage() {
               style={{ fill: "var(--accent)" }}
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.6 + (i / points.length) * 0.4, duration: 0.4 }}
+              transition={{ delay: 0.4 + (i / points.length) * 0.6, duration: 0.4 }}
             />
           ))}
         </svg>
