@@ -61,7 +61,7 @@ export function AccountCard() {
       ) : user ? (
         <>
           <p className="text-[13.5px] mb-3" style={{ color: "var(--ink-soft)" }}>
-            {accord(gender, "Connecté", "Connectée", "Connecté·e")} avec Google en tant que <strong style={{ color: "var(--ink)" }}>{user.email ?? user.name}</strong>.
+            {accord(gender, "Connecté", "Connectée", "Connecté·e")} en tant que <strong style={{ color: "var(--ink)" }}>{user.email ?? user.name}</strong>.
             Ta progression et tes préférences sont sauvegardées automatiquement et te suivent sur tous tes appareils.
           </p>
           <div className="flex items-center gap-2 mb-4 text-xs" style={{ color: "var(--ink-faint)" }}>
@@ -108,6 +108,12 @@ export function AccountCard() {
           </p>
           <button className="btn-primary btn-sm" disabled={redirecting} onClick={signInWithGoogle}>
             {redirecting ? "Redirection…" : "Se connecter avec Google"}
+          </button>
+          <button
+            className="btn-ghost btn-sm mt-2.5 w-full"
+            onClick={() => void window.location.assign("/login")}
+          >
+            Se connecter avec un email
           </button>
         </>
       )}

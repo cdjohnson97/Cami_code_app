@@ -25,6 +25,12 @@ export type UserDoc = {
   image?: string | null;
   role?: "student" | "admin" | "teacher";
   classId?: ObjectId;
+  /** Hash pbkdf2 du mot de passe (connexion email/password). */
+  passwordHash?: string | null;
+  /** Sel associé au hash. */
+  passwordSalt?: string | null;
+  /** Date de création du compte (connexion email/password). */
+  createdAt?: Date | null;
 };
 
 /** One document per user, `_id` = the user's `_id`. */
