@@ -4,7 +4,7 @@ import { flatChapters } from "./progress";
 import type { ProgressData } from "./cloud/shape";
 import type { Exercise } from "./types";
 
-export type LearnerProgress = Partial<Pick<ProgressData, "completed" | "passAttempts" | "code">>;
+export type LearnerProgress = Partial<Pick<ProgressData, "completed" | "passAttempts" | "code" | "usedSolution" | "usedPaste">>;
 
 export type ExerciseStatus = "passed" | "started" | "todo";
 
@@ -34,24 +34,30 @@ export type ExerciseStat = {
   avgFailures: number | null;
   /** Passed on the very first "Vérifier". */
   firstTry: number;
+  /** Passed with solution revealed. */
+  withSolution: number;
+  /** Passed with code pasted from clipboard. */
+  withPaste: number;
 };
 
 /** One entry per exercise of the curriculum, in course order. */
 export function exerciseStats(learners: LearnerProgress[]): ExerciseStat[] {
   return flatChapters().flatMap(({ phase, chapter }) =>
     chapter.exercises.map((ex) => {
-      let started = 0, passed = 0, failuresSum = 0, failuresCount = 0, firstTry = 0;
+      let started = 0, passed = 0, failuresSum = 0, failuresCount = 0, firstTry = 0, withSolution = 0, withPaste = 0;
       for (const p of learners) {
         const status = exerciseStatus(p, ex);
         if (status === "todo") continue;
         started++;
         if (status !== "passed") continue;
         passed++;
+        if (p.usedSolution?.[ex.id]) withSolution++;
+        if (p.usedPaste?.[ex.id]) withPaste++;
         const failures = p.passAttempts?.[ex.id];
         if (typeof failures === "number") {
           failuresSum += failures;
           failuresCount++;
-          if (failures === 0) firstTry++;
+          if (failures === 0 && !p.usedSolution?.[ex.id] && !p.usedPaste?.[ex.id]) firstTry++;
         }
       }
       return {
@@ -65,6 +71,8 @@ export function exerciseStats(learners: LearnerProgress[]): ExerciseStat[] {
         stuck: started - passed,
         avgFailures: failuresCount ? failuresSum / failuresCount : null,
         firstTry,
+        withSolution,
+        withPaste,
       };
     })
   );

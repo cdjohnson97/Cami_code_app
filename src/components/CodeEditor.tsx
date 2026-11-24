@@ -92,10 +92,12 @@ export function CodeEditor({
   value,
   onChange,
   lang,
+  onPasteCode,
 }: {
   value: string;
   onChange: (v: string) => void;
   lang: string;
+  onPasteCode?: (pastedText: string) => void;
 }) {
   const taRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
@@ -347,6 +349,12 @@ export function CodeEditor({
             onChange={handleChange}
             onScroll={syncScrollX}
             onKeyDown={handleKeyDown}
+            onPaste={(e) => {
+              const pasted = e.clipboardData.getData("text");
+              if (pasted.includes("\n") || pasted.trim().length > 25) {
+                onPasteCode?.(pasted);
+              }
+            }}
             onClick={() => setPopup(null)}
             onBlur={() => setPopup(null)}
             spellCheck={false}

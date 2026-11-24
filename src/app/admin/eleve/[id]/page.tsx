@@ -102,17 +102,31 @@ export default async function LearnerPage({ params }: Props) {
                           const status = statuses[i];
                           const st = STATUS[status];
                           const failures = prog?.passAttempts?.[ex.id];
+                          const usedSol = prog?.usedSolution?.[ex.id];
+                          const usedPaste = prog?.usedPaste?.[ex.id];
                           const code = prog?.code?.[ex.id];
+                          const isWithAid = !!(usedSol || usedPaste);
                           return (
                             <li key={ex.id} className="px-4 py-2.5 border-t first:border-t-0 text-[13.5px]" style={{ borderColor: "var(--line)" }}>
                               <div className="flex items-center gap-2.5 flex-wrap">
-                                <span aria-label={st.label} title={st.label} className="w-4 text-center font-bold" style={{ color: st.color }}>{st.icon}</span>
+                                <span
+                                  aria-label={usedSol ? "Réussi avec la solution" : usedPaste ? "Réussi avec code collé" : st.label}
+                                  title={usedSol ? "Réussi avec la solution" : usedPaste ? "Réussi avec code collé" : st.label}
+                                  className="w-4 text-center font-bold"
+                                  style={{ color: isWithAid ? "var(--warn)" : st.color }}
+                                >
+                                  {usedSol ? "💡" : usedPaste ? "📋" : st.icon}
+                                </span>
                                 <span style={{ color: status === "todo" ? "var(--ink-faint)" : "var(--ink)" }}>{ex.title}</span>
-                                <span className="text-xs" style={{ color: "var(--ink-faint)" }}>
+                                <span className="text-xs" style={{ color: isWithAid ? "var(--warn)" : "var(--ink-faint)" }}>
                                   {status === "passed"
-                                    ? typeof failures === "number"
-                                      ? failures === 0 ? "réussi du premier coup" : `réussi après ${failures} essai${failures > 1 ? "s" : ""} raté${failures > 1 ? "s" : ""}`
-                                      : "réussi"
+                                    ? usedSol
+                                      ? "validé avec la solution"
+                                      : usedPaste
+                                      ? "validé avec code collé (presse-papier)"
+                                      : typeof failures === "number"
+                                        ? failures === 0 ? "réussi du premier coup" : `réussi après ${failures} essai${failures > 1 ? "s" : ""} raté${failures > 1 ? "s" : ""}`
+                                        : "réussi"
                                     : status === "started" ? "en cours" : ""}
                                 </span>
                               </div>

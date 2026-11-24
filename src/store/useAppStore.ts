@@ -28,6 +28,11 @@ type Store = AppState & {
   markNameAsked: () => void;
   saveCode: (exerciseId: string, code: string) => void;
   registerAttempt: (exerciseId: string) => number;
+  recordFailedAttempt: (exerciseId: string) => void;
+  recordUsedSolution: (exerciseId: string) => void;
+  recordUsedPaste: (exerciseId: string) => void;
+  clearUsedPaste: (exerciseId: string) => void;
+  retryExercise: (exerciseId: string, starterCode: string) => void;
   completeExercise: (exerciseId: string, chapterId: string) => void;
   clearLastEarnedBadges: () => void;
   clearTravelAnimation: () => void;
@@ -51,6 +56,9 @@ const initialAppState: AppState = {
   completed: {},
   code: {},
   passAttempts: {},
+  failedAttempts: {},
+  usedSolution: {},
+  usedPaste: {},
   earnedBadges: {},
   streak: 0,
   bestStreak: 0,
@@ -112,6 +120,61 @@ export const useAppStore = create<Store>()(
         return attemptsThisSession[exerciseId];
       },
 
+      recordFailedAttempt: (exerciseId) =>
+        set((s) => ({
+          failedAttempts: {
+            ...s.failedAttempts,
+            [exerciseId]: (s.failedAttempts[exerciseId] || 0) + 1,
+          },
+        })),
+
+      recordUsedSolution: (exerciseId) =>
+        set((s) => ({
+          usedSolution: {
+            ...s.usedSolution,
+            [exerciseId]: true,
+          },
+        })),
+
+      recordUsedPaste: (exerciseId) =>
+        set((s) => ({
+          usedPaste: {
+            ...s.usedPaste,
+            [exerciseId]: true,
+          },
+        })),
+
+      clearUsedPaste: (exerciseId) =>
+        set((s) => {
+          const next = { ...s.usedPaste };
+          delete next[exerciseId];
+          return { usedPaste: next };
+        }),
+
+      retryExercise: (exerciseId, starterCode) =>
+        set((s) => {
+          const nextCompleted = { ...s.completed };
+          delete nextCompleted[exerciseId];
+          const nextUsedSolution = { ...s.usedSolution };
+          delete nextUsedSolution[exerciseId];
+          const nextUsedPaste = { ...s.usedPaste };
+          delete nextUsedPaste[exerciseId];
+          const nextPassAttempts = { ...s.passAttempts };
+          delete nextPassAttempts[exerciseId];
+          const nextFailedAttempts = { ...s.failedAttempts };
+          delete nextFailedAttempts[exerciseId];
+          delete attemptsThisSession[exerciseId];
+
+          return {
+            completed: nextCompleted,
+            usedSolution: nextUsedSolution,
+            usedPaste: nextUsedPaste,
+            passAttempts: nextPassAttempts,
+            failedAttempts: nextFailedAttempts,
+            code: { ...s.code, [exerciseId]: starterCode },
+          };
+        }),
+
       completeExercise: (exerciseId, chapterId) => {
         const already = get().completed[exerciseId];
         const failuresBeforePass = Math.max(0, (attemptsThisSession[exerciseId] || 1) - 1);
@@ -122,7 +185,7 @@ export const useAppStore = create<Store>()(
         if (already) return;
         const s = get();
         const newly = evaluateBadges(
-          { completed: s.completed, passAttempts: s.passAttempts, streak: s.streak },
+          { completed: s.completed, passAttempts: s.passAttempts, streak: s.streak, usedSolution: s.usedSolution, usedPaste: s.usedPaste },
           s.earnedBadges
         );
         if (newly.length) {
