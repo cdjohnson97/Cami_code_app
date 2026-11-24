@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Chapter, Exercise, Phase } from "@/lib/types";
+import type { Chapter, Exercise, MascotMood, Phase } from "@/lib/types";
 import { useAppStore } from "@/store/useAppStore";
 import { CodeEditor } from "./CodeEditor";
+import { Mascot } from "./Mascot";
+import { LottiePlayer } from "./LottiePlayer";
 import { highlightCode } from "@/lib/highlight";
 
 export function ExerciseCard({
@@ -44,9 +46,34 @@ export function ExerciseCard({
   const [pasteWarning, setPasteWarning] = useState(false);
   const [altShown, setAltShown] = useState(false);
 
+  // Compagnon CaMI interactif et réactif
+  const [companionMood, setCompanionMood] = useState<MascotMood>(completed ? "happy" : "idle");
+  const [companionSpeech, setCompanionSpeech] = useState<string | null>(null);
+  const speechTimeoutRef = useRef<number | null>(null);
+
+  function triggerCompanion(mood: MascotMood, speech?: string, duration = 2800) {
+    setCompanionMood(mood);
+    setCompanionSpeech(speech ?? null);
+    if (speechTimeoutRef.current) window.clearTimeout(speechTimeoutRef.current);
+    speechTimeoutRef.current = window.setTimeout(() => {
+      setCompanionSpeech(null);
+      setCompanionMood(completed ? "happy" : "idle");
+    }, duration);
+  }
+
+  // Don't leave a timer running if the learner navigates away mid-reaction.
+  useEffect(() => {
+    return () => {
+      if (speechTimeoutRef.current) window.clearTimeout(speechTimeoutRef.current);
+    };
+  }, []);
+
   function updateCode(v: string) {
     setCode(v);
     saveCode(ex.id, v);
+    if (companionMood !== "coding" && !completed) {
+      triggerCompanion("coding", undefined, 1600);
+    }
   }
 
   function handleRun() {
@@ -67,8 +94,10 @@ export function ExerciseCard({
     setFeedback({ ok: verdict.pass, message: verdict.message });
     if (verdict.pass) {
       completeExercise(ex.id, chapter.id);
+      triggerCompanion("victory", "Bravo ! C'est validé ! 🌟", 4000);
     } else {
       recordFailedAttempt(ex.id);
+      triggerCompanion("curious", "Regardons le bug ensemble ! 🔍", 3200);
     }
     if (res.success) {
       setConsoleLines(res.output);
@@ -84,6 +113,7 @@ export function ExerciseCard({
     setFeedback(null);
     setConsoleLines(null);
     setConsoleErr(null);
+    triggerCompanion("idle", undefined, 1000);
   }
 
   function handleRetryAutonomous() {
@@ -96,11 +126,13 @@ export function ExerciseCard({
     setConfirmingSolution(false);
     setPasteWarning(false);
     setRevealedHints(0);
+    triggerCompanion("happy", "C'est parti pour le 100% autonome ! 💪", 3000);
   }
 
   function handlePasteCode() {
     recordUsedPaste(ex.id);
     setPasteWarning(true);
+    triggerCompanion("curious", "Bloc de code collé détecté !", 2800);
   }
 
   const isWithAid = !!(usedSolution || usedPaste);
@@ -215,6 +247,27 @@ export function ExerciseCard({
           </div>
         </div>
       )}
+
+      <AnimatePresence>
+        {companionSpeech && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 4, scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 380, damping: 26 }}
+            className="mx-5 mb-3 flex items-center gap-3 rounded-[10px] border px-3.5 py-2"
+            style={{ borderColor: "var(--line)", background: "var(--bg)" }}
+          >
+            <div
+              className="flex-none w-12 h-12 -my-1.5"
+              style={{ filter: "hue-rotate(145deg) saturate(1.05)" }}
+            >
+              <LottiePlayer src="/lottie/chatbot.json" label="CaMI, ton compagnon" className="h-full w-full" />
+            </div>
+            <p className="text-[13px] leading-snug m-0" style={{ color: "var(--ink-soft)" }}>{companionSpeech}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="flex items-center gap-2.5 px-5 pt-3 pb-4 flex-wrap">
         <button onClick={handleCheck} className="btn-primary">Vérifier</button>

@@ -68,8 +68,17 @@ export default async function AdminPage() {
   const completedCourse = rows.filter((r) => r.pct === 100).length;
 
   return (
-    <Shell>
-      <h1 className="text-2xl mb-1">Suivi des apprenant·es</h1>
+      <Shell>
+      <div className="flex items-baseline gap-2 mb-8">
+        <h1 className="text-2xl font-semibold">Suivi des apprenant·es</h1>
+        <Link
+          href="/admin/classes"
+          className="inline-block text-[13.5px] no-underline"
+          style={{ color: "var(--accent)" }}
+        >
+          → Gérer les classes et les rôles
+        </Link>
+      </div>
       <p className="text-[14.5px] mb-9" style={{ color: "var(--ink-soft)" }}>
         {rows.length} compte{rows.length > 1 ? "s" : ""} · {avgPct}% de progression moyenne · {completedCourse} parcours
         terminé{completedCourse > 1 ? "s" : ""}

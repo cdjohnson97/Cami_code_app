@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useAppStore } from "@/store/useAppStore";
+import { useAuthStore } from "@/store/useAuthStore";
+import { cloudEnabled } from "@/lib/cloud/config";
+import { signOutSafely } from "@/lib/signOut";
 import { PHASE_ORDER, CURRICULUM } from "@/lib/curriculum";
 import { chapterDone, isChapterUnlocked, totalExerciseCount, completedCount } from "@/lib/progress";
 import { BADGES } from "@/lib/progress";
@@ -19,6 +22,68 @@ const NAV_ITEMS: { id: string; icon: string; label: string }[] = [
   { id: "certificat", icon: "🎓", label: "Certificat" },
   { id: "reglages", icon: "⚙️", label: "Réglages" },
 ];
+
+/** Door + arrow leaving it: the usual "log out" glyph, drawn inline to follow the text color. */
+function LogoutIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="16"
+      height="16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M15 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3" />
+      <path d="M10 16l4-4-4-4" />
+      <path d="M14 12H4" />
+    </svg>
+  );
+}
+
+/** Sign-out row at the bottom of the side navigation — only for a signed-in learner. */
+function SignOutItem({ onNavigate }: { onNavigate?: () => void }) {
+  const user = useAuthStore((s) => s.user);
+  const [state, setState] = useState<"idle" | "saving" | "failed">("idle");
+
+  if (!cloudEnabled || !user) return null;
+
+  async function handleSignOut() {
+    setState("saving");
+    const ok = await signOutSafely();
+    if (!ok) {
+      setState("failed");
+      return;
+    }
+    onNavigate?.();
+  }
+
+  return (
+    <div className="flex flex-col gap-0.5 pt-2 mt-1 border-t" style={{ borderColor: "var(--line)" }}>
+      <button
+        type="button"
+        onClick={() => void handleSignOut()}
+        disabled={state === "saving"}
+        title="Se déconnecter"
+        className="flex items-center gap-2.5 w-full text-left px-2 py-2 rounded-[9px] text-[14.5px] cursor-pointer"
+        style={{ color: state === "failed" ? "var(--error)" : "var(--ink-soft)", background: "none" }}
+      >
+        <span className="w-5 flex justify-center">
+          <LogoutIcon />
+        </span>
+        <span>{state === "saving" ? "Déconnexion…" : "Se déconnecter"}</span>
+      </button>
+      {state === "failed" && (
+        <p className="px-2 pb-1 text-xs leading-snug" style={{ color: "var(--error)" }}>
+          Sauvegarde impossible. Réessaie quand le réseau revient.
+        </p>
+      )}
+    </div>
+  );
+}
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const route = useAppStore((s) => s.route);
@@ -152,6 +217,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             <span>{item.label}</span>
           </AppLink>
         ))}
+        <SignOutItem onNavigate={onNavigate} />
       </div>
     </>
   );

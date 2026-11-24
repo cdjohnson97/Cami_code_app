@@ -28,6 +28,7 @@ export const PREFERENCE_KEYS = [
   "theme",
   "soundOn",
   "sandboxLang",
+  "classId",
 ] as const satisfies readonly (keyof AppState)[];
 
 export type ProgressData = Pick<AppState, (typeof PROGRESS_KEYS)[number]>;
@@ -122,6 +123,7 @@ const PREFERENCES_SCHEMA: Record<keyof PreferencesData, Check> = {
   theme: oneOf("auto", "light", "dark"),
   soundOn: isBool,
   sandboxLang: oneOf("pseudo", "python"),
+  classId: nullable(isString(24)),
 };
 
 type Validated<T> = { ok: true; value: Partial<T> } | { ok: false; field: string };
@@ -140,3 +142,63 @@ function validate<T>(input: unknown, schema: Record<keyof T, Check>): Validated<
 export const validateProgress = (input: unknown) => validate<ProgressData>(input, PROGRESS_SCHEMA);
 export const validatePreferences = (input: unknown) => validate<PreferencesData>(input, PREFERENCES_SCHEMA);
 export { isPlainObject };
+
+// ---------------------------------------------------------------------------------------------
+// Validation des nouveaux documents (devoirs, annonces).
+// ---------------------------------------------------------------------------------------------
+
+const DEVOIR_SCHEMA: Record<string, Check> = {
+  classId: isString(24),
+  exerciseId: isString(64),
+  title: isString(100),
+  dueDate: nullable(isString(40)),
+};
+
+const DEVOIR_SOUMIS_SCHEMA: Record<string, Check> = {
+  devoirId: isString(24),
+  userId: isString(24),
+  status: oneOf("en_cours", "termine"),
+  note: nullable(isString(500)),
+};
+
+const ANNONCE_SCHEMA: Record<string, Check> = {
+  classId: isString(24),
+  title: isString(100),
+  content: isString(2000),
+};
+
+export const validateDevoir = (input: unknown) => {
+  if (!isPlainObject(input)) return { ok: false, field: "(root)" };
+  const value: Record<string, unknown> = {};
+  for (const [key, v] of Object.entries(input)) {
+    const check = (DEVOIR_SCHEMA as Record<string, Check>)[key];
+    if (key === "_id" || key === "createdBy" || key === "createdAt") continue;
+    if (!check || !check(v)) return { ok: false, field: key };
+    value[key] = v;
+  }
+  return { ok: true, value };
+};
+
+export const validateDevoirSoumis = (input: unknown) => {
+  if (!isPlainObject(input)) return { ok: false, field: "(root)" };
+  const value: Record<string, unknown> = {};
+  for (const [key, v] of Object.entries(input)) {
+    const check = (DEVOIR_SOUMIS_SCHEMA as Record<string, Check>)[key];
+    if (key === "_id" || key === "submittedAt") continue;
+    if (!check || !check(v)) return { ok: false, field: key };
+    value[key] = v;
+  }
+  return { ok: true, value };
+};
+
+export const validateAnnonce = (input: unknown) => {
+  if (!isPlainObject(input)) return { ok: false, field: "(root)" };
+  const value: Record<string, unknown> = {};
+  for (const [key, v] of Object.entries(input)) {
+    const check = (ANNONCE_SCHEMA as Record<string, Check>)[key];
+    if (key === "_id" || key === "createdBy" || key === "createdAt") continue;
+    if (!check || !check(v)) return { ok: false, field: key };
+    value[key] = v;
+  }
+  return { ok: true, value };
+};

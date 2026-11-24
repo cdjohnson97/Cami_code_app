@@ -45,6 +45,7 @@ type Store = AppState & {
   resetProgress: () => void;
   setHydrated: () => void;
   setCompletionDate: (iso: string) => void;
+  setClassId: (classId: string | null) => void;
   hydrateFromRemote: (data: Partial<AppState>) => void;
   toggleSidebar: () => void;
 };
@@ -69,6 +70,7 @@ const initialAppState: AppState = {
   sandboxLang: "pseudo",
   soundOn: true,
   completionDate: null,
+  classId: null,
 };
 
 const attemptsThisSession: Record<string, number> = {};
@@ -224,6 +226,7 @@ export const useAppStore = create<Store>()(
         get().goTo("home");
       },
       setCompletionDate: (iso) => set((s) => (s.completionDate ? {} : { completionDate: iso })),
+  setClassId: (classId: string | null) => set({ classId }),
 
       // Called once after sign-in, with whatever this account already had saved in MongoDB —
       // replaces the relevant slice of local state so this device picks up where the account
