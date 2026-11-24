@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import SweetAlert from "sweetalert2";
 import { Mascot } from "@/components/Mascot";
 import { Shell } from "@/app/admin/ui";
 import { AppLink } from "@/components/AppLink";
@@ -11,10 +12,9 @@ import { AppLink } from "@/components/AppLink";
 export default function LoginPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [redirecting, setRedirecting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // NextAuth redirige vers /login?error=... quand la connexion échoue.
+    // NextAuth redirige vers /login?error=... quand la connexion échoue (Google OAuth surtout).
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const err = params.get("error");
@@ -27,25 +27,71 @@ export default function LoginPage() {
           AccessDenied: "Connexion refusée.",
           default: "La connexion a échoué. Réessayez.",
         };
-        setError(map[err] ?? map.default);
+        SweetAlert.fire({
+          icon: "error",
+          title: "Erreur de connexion",
+          text: map[err] ?? map.default,
+          confirmButtonText: "OK",
+        });
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
   }, []);
 
+  /** Vérifie si un email est déjà associé à un compte (appel API serveur). */
+  async function checkEmailExists(email: string): Promise<boolean> {
+    try {
+      const r = await fetch("/api/auth/check-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!r.ok) return false;
+      const d = await r.json();
+      return !!d.exists;
+    } catch {
+      return false;
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setRedirecting(true);
-    setError(null);
     const form = e.currentTarget as HTMLFormElement;
     const formData = new FormData(form);
-    const email = (formData.get("email") as string).trim();
+    const email = (formData.get("email") as string).trim().toLowerCase();
     const password = formData.get("password") as string;
 
     if (!email || !password) {
-      setError("Email et mot de passe requis.");
+      SweetAlert.fire({
+        icon: "error",
+        title: "Champs requis",
+        text: "Email et mot de passe sont requis.",
+        confirmButtonText: "OK",
+      });
       setRedirecting(false);
       return;
+    }
+
+    // À l'inscription : vérifier d'abord si l'email est déjà utilisé.
+    if (mode === "signup") {
+      const exists = await checkEmailExists(email);
+      if (exists) {
+        setRedirecting(false);
+        const result = await SweetAlert.fire({
+          icon: "warning",
+          title: "Ce compte existe déjà",
+          text: "Un compte CaMI est déjà associé à cet email. Voulez-vous vous connecter à la place ?",
+          showCancelButton: true,
+          confirmButtonText: "Se connecter",
+          cancelButtonText: "Réessayer",
+          reverseButtons: true,
+        });
+        if (result.isConfirmed) {
+          setMode("signin");
+        }
+        return;
+      }
     }
 
     const ok = await signIn("email", {
@@ -54,20 +100,29 @@ export default function LoginPage() {
       action: mode,
       redirect: false,
     });
+    setRedirecting(false);
+
     if (ok?.ok) {
       window.location.assign("/");
     } else if (ok?.error) {
-      setError(typeof ok.error === "string" ? ok.error : "Identifiant ou mot de passe incorrect.");
-      setRedirecting(false);
+      SweetAlert.fire({
+        icon: "error",
+        title: "Connexion échouée",
+        text: typeof ok.error === "string" ? ok.error : "Identifiant ou mot de passe incorrect.",
+        confirmButtonText: "OK",
+      });
     } else {
-      setError("Connexion impossible. Réessayez.");
-      setRedirecting(false);
+      SweetAlert.fire({
+        icon: "error",
+        title: "Connexion impossible",
+        text: "Une erreur est survenue. Réessayez plus tard.",
+        confirmButtonText: "OK",
+      });
     }
   }
 
   async function handleGoogle() {
     setRedirecting(true);
-    setError(null);
     void signIn("google", { redirectTo: "/" });
   }
 
@@ -87,17 +142,6 @@ export default function LoginPage() {
             CaMI — apprendre à coder, puis apprivoiser l’IA.
           </p>
         </motion.div>
-
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-5 rounded-(--radius) border px-4 py-3"
-            style={{ background: "var(--destructive-soft)", borderColor: "var(--destructive)", color: "var(--destructive)" }}
-          >
-            {error}
-          </motion.div>
-        )}
 
         <motion.div
           initial={{ opacity: 0, y: 10 }}
