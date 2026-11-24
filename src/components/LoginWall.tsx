@@ -21,19 +21,27 @@ export function LoginWall({ chapterTitle }: { chapterTitle: string }) {
       {/*   = non-breaking space: French quotes stay glued to the title. */}
       <h2 className="text-xl mb-2.5">Pour continuer vers «{" "}{chapterTitle}{" "}», connecte-toi</h2>
       <p className="text-[14.5px] leading-relaxed mb-6" style={{ color: "var(--ink-soft)" }}>
-        Le premier chapitre est en accès libre. Pour la suite du voyage, connecte-toi avec ton compte Google : ta
-        progression sera sauvegardée et te suivra sur tous tes appareils. Ce que tu as déjà fait ici est conservé.
+        Le premier chapitre est en accès libre. Pour la suite du voyage, connecte-toi : ta
+        progression sera sauvegardée et te suivra sur tous tes appareils. Ce que tu as déjà fait
+        ici est conservé.
       </p>
       <button
         className="btn-primary"
         disabled={redirecting}
         onClick={() => {
           setRedirecting(true);
-          // Back to this very chapter once signed in.
           void signIn("google", { redirectTo: window.location.pathname });
         }}
       >
         {redirecting ? "Redirection…" : "Se connecter avec Google"}
+      </button>
+      <button
+        className="btn-ghost mt-3"
+        onClick={() => {
+          window.location.assign("/login");
+        }}
+      >
+        Se connecter avec un email
       </button>
       <AppLink to={firstChapter.id} className="btn-ghost btn-sm mt-3">← Revoir «{" "}{firstChapter.title}{" "}»</AppLink>
     </div>

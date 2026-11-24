@@ -51,7 +51,11 @@ export function CertificatePage() {
         </div>
       )}
 
+      {/* Aperçu du certificat (pas de téléchargement — affichage en cours) */}
       <div className="max-w-[640px] mx-auto mt-7 mb-2 px-10 py-11 rounded-2xl border-[3px] text-center relative" style={{ borderColor: "var(--accent)", background: "var(--paper)", boxShadow: "var(--shadow-lg)", borderStyle: "double" }}>
+        <span className="absolute top-4 right-4 inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider" style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid var(--accent)" }}>
+          ● En cours
+        </span>
         <div className="inline-block font-mono text-[13px] font-bold rounded-[6px] border-[1.5px] px-2 py-0.5 mb-2.5" style={{ color: "var(--accent)", borderColor: "var(--accent)" }}>{"</>"}</div>
         <div className="flex justify-center mb-1.5"><Mascot mood="celebrate" size={64} interactive={false} /></div>
         <span className="block font-mono text-xs uppercase tracking-wide mb-3.5" style={{ color: "var(--ink-faint)" }}>Certificat de réussite</span>
@@ -77,8 +81,10 @@ export function CertificatePage() {
         <div className="font-mono text-xs pt-3.5 border-t" style={{ color: "var(--ink-faint)", borderColor: "var(--line)" }}>{dateStr}</div>
       </div>
 
-      <div className="max-w-[640px] mx-auto mt-5 text-center no-print">
-        <button className="btn-primary" onClick={() => window.print()}>🖨️ Imprimer / Enregistrer en PDF</button>
+      <div className="max-w-[640px] mx-auto mt-5 text-center">
+        <p className="text-[13px]" style={{ color: "var(--ink-faint)" }}>
+          Ce certificat est un aperçu : il ne peut pas être téléchargé pour l&apos;instant.
+        </p>
       </div>
     </div>
   );
