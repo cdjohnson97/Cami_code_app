@@ -6,6 +6,7 @@ import { Lottie } from "lottie-react";
 import { useEffect, useState } from "react";
 import SweetAlert from "sweetalert2";
 import { Card, Message, Shell } from "@/app/admin/ui";
+import { copyToClipboard } from "@/lib/clipboard";
 
 const LOTTIE_CLASS = "https://assets10.lottiefiles.com/packages/lf20_1cy2pSff.json";
 const LOTTIE_USERS = "https://assets9.lottiefiles.com/packages/lf20_JCAtExltfu.json";
@@ -18,10 +19,19 @@ type MyClass = {
   memberCount: number;
 };
 
+type Capability = {
+  icon: string;
+  title: string;
+  desc: string;
+  href?: string;
+  onClick?: () => void;
+};
+
 export default function EnseignantDashboard() {
   const [myClasses, setMyClasses] = useState<MyClass[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,11 +62,16 @@ export default function EnseignantDashboard() {
     const name = (formData.get("name") as string).trim();
     if (!name) return;
 
+    const codeExpiresAt = (formData.get("codeExpiresAt") as string) || undefined;
+    const maxStudents = (formData.get("maxStudents") as string) || undefined;
+
+    setCreating(true);
     const r = await fetch("/api/classes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "create", name }),
+      body: JSON.stringify({ action: "create", name, codeExpiresAt, maxStudents: maxStudents ? Number(maxStudents) : undefined }),
     });
+    setCreating(false);
     if (r.ok) {
       form.reset();
       window.location.reload();
@@ -65,6 +80,49 @@ export default function EnseignantDashboard() {
       SweetAlert.fire({ icon: "error", title: "Erreur", text: d.error ?? "Impossible de créer la classe" });
     }
   }
+
+  async function handleCopyCode(code: string) {
+    const ok = await copyToClipboard(code);
+    if (ok) {
+      SweetAlert.fire({ icon: "success", title: "Code copié !", timer: 1500, showConfirmButton: false, toast: true, position: "top-end" });
+    }
+  }
+
+  const capabilities: Capability[] = [
+    {
+      icon: "➕",
+      title: "Créer une classe",
+      desc: "Générez un code d'invitation à partager avec vos élèves.",
+      onClick: () => {
+        const el = document.getElementById("form-create-class");
+        el?.scrollIntoView({ behavior: "smooth" });
+      },
+    },
+    {
+      icon: "📝",
+      title: "Créer un devoir",
+      desc: "Assignez un exercice à une classe avec une date limite.",
+      href: "#devoirs",
+    },
+    {
+      icon: "📢",
+      title: "Publier une annonce",
+      desc: "Diffusez un message à tous les élèves d'une classe.",
+      href: "#annonces",
+    },
+    {
+      icon: "👥",
+      title: "Gérer les élèves",
+      desc: "Ajoutez ou retirez des membres de vos classes.",
+      href: "#eleves",
+    },
+    {
+      icon: "🏆",
+      title: "Créer des badges",
+      desc: "Récompensez vos élèves avec des badges de classe.",
+      href: "#badges",
+    },
+  ];
 
   if (loading) {
     return (
@@ -86,43 +144,131 @@ export default function EnseignantDashboard() {
           animate={{ opacity: 1, y: 0 }}
           className="flex items-baseline gap-2 mb-8"
         >
-          <h1 className="text-2xl font-semibold">Mon tableau de bord enseignant</h1>
+          <h1 className="text-2xl font-semibold">Mon espace enseignant</h1>
           <p className="text-[13.5px]" style={{ color: "var(--ink-soft)" }}>
             Gérez vos classes, créez des devoirs et suivez la progression de vos élèves.
           </p>
         </motion.div>
       </AnimatePresence>
 
-      {/* Créer une classe */}
+      {/* Barre d'actions rapides */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="mb-8 flex flex-wrap gap-3"
+      >
+        <Link
+          href="#form-create-class"
+          onClick={() => {
+            const el = document.getElementById("form-create-class");
+            el?.scrollIntoView({ behavior: "smooth" });
+          }}
+          className="btn-primary btn-sm text-[13px] px-4 py-2.5"
+        >
+          ➕ Nouvelle classe
+        </Link>
+        <button
+          className="btn-ghost btn-sm text-[13px] px-4 py-2.5"
+          onClick={() => {
+            const el = document.getElementById("form-create-class");
+            el?.scrollIntoView({ behavior: "smooth" });
+          }}
+        >
+          📋 Voir le formulaire
+        </button>
+      </motion.div>
+
+      {/* Présentation des capacités (toujours visible pour guider l'enseignant) */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
+        transition={{ delay: 0.2 }}
         className="mb-10"
       >
-        <h2 className="text-lg font-semibold mb-3 flex items-center gap-2" style={{ color: "var(--ink)" }}>
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: "var(--ink)" }}>
+          <span style={{ color: "var(--accent)" }}>🎯</span> Ce que vous pouvez faire
+        </h2>
+        <div className="grid md:grid-cols-3 gap-4">
+          {capabilities.map((cap, i) => (
+            <div
+              key={cap.title}
+              className="p-5 cursor-pointer hover:border-accent/50 transition-colors rounded-xl border"
+              style={{ background: "var(--paper)", borderColor: "var(--line)" }}
+              onClick={cap.onClick}
+            >
+              <Card>
+                <div className="text-2xl mb-3">{cap.icon}</div>
+                <h3 className="font-semibold mb-1" style={{ color: "var(--ink)" }}>
+                  {cap.title}
+                </h3>
+                <p className="text-[13px] leading-relaxed" style={{ color: "var(--ink-soft)" }}>
+                  {cap.desc}
+                </p>
+              </Card>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* Formulaire de création de classe */}
+      <motion.div
+        id="form-create-class"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="mb-10"
+      >
+        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: "var(--ink)" }}>
           <span style={{ color: "var(--accent)" }}>➕</span> Créer une nouvelle classe
         </h2>
-        <form
-          className="flex gap-2.5 max-w-[520px]"
-          onSubmit={handleCreateClass}
-        >
-          <input
-            name="name"
-            placeholder="Nom de la classe"
-            className="rounded-[9px] border px-3 py-2 text-[14.5px] outline-none flex-1 max-w-[280px]"
-            style={{ borderColor: "var(--line-strong)", background: "var(--bg)", color: "var(--ink)" }}
-            required
-          />
-          <button className="btn-primary btn-sm">Créer</button>
-        </form>
+        <Card>
+          <form onSubmit={handleCreateClass} className="grid md:grid-cols-3 gap-4">
+            <div className="col-span-4 md:col-span-2">
+              <input
+                name="name"
+                placeholder="Nom de la classe (ex: 3ème A)"
+                className="rounded-[9px] border px-4 py-3 text-[14.5px] outline-none w-full"
+                style={{ borderColor: "var(--line-strong)", background: "var(--bg)", color: "var(--ink)" }}
+                required
+              />
+            </div>
+            <div>
+              <input
+                name="codeExpiresAt"
+                type="date"
+                className="rounded-[9px] border px-4 py-3 text-[14.5px] outline-none w-full"
+                style={{ borderColor: "var(--line-strong)", background: "var(--bg)", color: "var(--ink)" }}
+              />
+            </div>
+            <div>
+              <input
+                name="maxStudents"
+                type="number"
+                placeholder="Max élèves"
+                min="1"
+                className="rounded-[9px] border px-4 py-3 text-[14.5px] outline-none w-full"
+                style={{ borderColor: "var(--line-strong)", background: "var(--bg)", color: "var(--ink)" }}
+              />
+            </div>
+            <button
+              className="btn-primary btn-sm col-span-4 md:col-span-1 self-end md:self-start"
+              disabled={creating}
+            >
+              {creating ? "Création…" : "Créer la classe"}
+            </button>
+          </form>
+          <p className="mt-3 text-[12.5px]" style={{ color: "var(--ink-faint)" }}>
+            Le code d'invitation à 6 caractères sera généré automatiquement. Partagez-le avec vos élèves pour qu'ils rejoignent la classe.
+          </p>
+        </Card>
       </motion.div>
 
       {/* Mes classes */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+        transition={{ delay: 0.4 }}
         className="mb-10"
       >
         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: "var(--ink)" }}>
@@ -132,9 +278,21 @@ export default function EnseignantDashboard() {
 
         {myClasses.length === 0 ? (
           <Card>
-            <div className="px-6 py-8 text-center" style={{ color: "var(--ink-soft)" }}>
-              <p>Vous n'avez aucune classe pour l'instant.</p>
-              <p className="text-[12px] mt-2">Créez votre première classe ci-dessus, puis partagez le code d'invitation avec vos élèves.</p>
+            <div className="px-6 py-12 text-center" style={{ color: "var(--ink-soft)" }}>
+              <div className="text-4xl mb-4">📭</div>
+              <p className="mb-4">Vous n'avez aucune classe pour l'instant.</p>
+              <p className="text-[13px] mb-6">
+                Créez votre première classe ci-dessus, puis partagez le code d'invitation avec vos élèves.
+              </p>
+              <button
+                onClick={() => {
+                  const el = document.getElementById("form-create-class");
+                  el?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="btn-primary btn-sm"
+              >
+                Créer ma première classe
+              </button>
             </div>
           </Card>
         ) : (
@@ -151,6 +309,16 @@ export default function EnseignantDashboard() {
                     <span className="text-xl font-bold" style={{ color: "var(--ink)" }}>{c.name}</span>
                     <div className="flex items-center gap-2 rounded-xl border px-3 py-2 bg-accent-soft" style={{ borderColor: "var(--accent)" }}>
                       <span className="font-mono text-lg font-bold" style={{ color: "var(--accent)" }}>{c.code}</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void handleCopyCode(c.code);
+                        }}
+                        className="p-1.5 rounded-lg hover:bg-accent transition-colors"
+                        style={{ color: "var(--accent-foreground)" }}
+                      >
+                        📋
+                      </button>
                     </div>
                   </div>
                   <p className="text-[13px]" style={{ color: "var(--ink-soft)" }}>
@@ -159,50 +327,13 @@ export default function EnseignantDashboard() {
                 </div>
                 <div className="px-6 py-4">
                   <p className="text-[12px] font-medium" style={{ color: "var(--ink-faint)" }}>
-                    Voir les détails →
+                    Ouvrir les détails → Devoirs, annonces, élèves, badges, export
                   </p>
                 </div>
               </Link>
             ))}
           </div>
         )}
-      </motion.div>
-
-      {/* Accès rapide */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="grid md:grid-cols-3 gap-4"
-      >
-        <Card>
-          <div className="p-6">
-            <div className="flex items-center gap-3">
-              <Lottie src={LOTTIE_USERS} style={{ height: 32, width: 32 }} />
-              <div>
-                <p className="text-[12px] font-medium" style={{ color: "var(--ink-faint)" }}>Gérer les classes</p>
-                <p className="text-lg font-bold" style={{ color: "var(--ink)" }}>{myClasses.length}</p>
-              </div>
-            </div>
-            <p className="mt-4 text-[13px]" style={{ color: "var(--ink-soft)" }}>
-              Créer, modifier et supprimer vos classes.
-            </p>
-          </div>
-        </Card>
-        <Card>
-          <div className="p-6">
-            <div className="flex items-center gap-3">
-              <Lottie src={LOTTIE_TASK} style={{ height: 32, width: 32 }} />
-              <div>
-                <p className="text-[12px] font-medium" style={{ color: "var(--ink-faint)" }}>Devoirs</p>
-                <p className="text-lg font-bold" style={{ color: "var(--ink)" }}>{myClasses.reduce((n, c) => n + c.memberCount, 0)}</p>
-              </div>
-            </div>
-            <p className="mt-4 text-[13px]" style={{ color: "var(--ink-soft)" }}>
-              Élèves total dans toutes vos classes.
-            </p>
-          </div>
-        </Card>
       </motion.div>
     </Shell>
   );
