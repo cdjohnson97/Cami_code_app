@@ -73,20 +73,12 @@ export function StatsPage() {
           <span className="font-mono text-[12px]" style={{ color: "var(--ink-soft)" }}>{pct}%</span>
         </div>
 
-        <div className="relative h-48 w-full">
-          {[25, 50, 75].map((y) => (
-            <div
-              key={y}
-              className="absolute left-0 right-0 h-[1px] border-b border-dashed"
-              style={{ borderColor: "var(--line)", top: y + "%", opacity: 0.4 }}
-            />
-          ))}
+        <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ display: "block" }}>
           <motion.path
             d={`M0,100 ${pathD} L100,100 Z`}
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
             transition={{ duration: 1.2, ease: "easeOut" }}
-            className="absolute inset-0"
             style={{ fill: "color-mix(in srgb, var(--accent) 15%, transparent)" }}
           />
           <motion.path
@@ -94,7 +86,6 @@ export function StatsPage() {
             initial={{ pathLength: 0 }}
             animate={{ pathLength: 1 }}
             transition={{ duration: 1.2, ease: "easeOut" }}
-            className="absolute inset-0"
             style={{ fill: "none", stroke: "var(--accent)", strokeWidth: 3 }}
           />
           {points.map((p, i) => (
@@ -103,19 +94,13 @@ export function StatsPage() {
               cx={p.x}
               cy={p.y}
               r={3}
-              className="absolute"
-              style={{
-                left: p.x + "%",
-                top: p.y + "%",
-                fill: "var(--accent)",
-                transform: "translate(-50%, -50%)",
-              }}
+              style={{ fill: "var(--accent)" }}
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.6 + (i / points.length) * 0.4, duration: 0.4 }}
             />
           ))}
-        </div>
+        </svg>
       </div>
 
       <div className="rounded-(--radius) border px-5 py-5 max-w-[640px]" style={{ background: "var(--paper)", borderColor: "var(--line)", boxShadow: "var(--shadow)" }}>
