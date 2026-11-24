@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import SweetAlert from "sweetalert2";
+import { swal } from "@/lib/swal";
 import { Mascot } from "@/components/Mascot";
 import { Shell } from "@/app/admin/ui";
 import { AppLink } from "@/components/AppLink";
@@ -27,7 +28,7 @@ export default function LoginPage() {
           AccessDenied: "Connexion refusée.",
           default: "La connexion a échoué. Réessayez.",
         };
-        SweetAlert.fire({
+        swal({
           icon: "error",
           title: "Erreur de connexion",
           text: map[err] ?? map.default,
@@ -63,7 +64,7 @@ export default function LoginPage() {
     const password = formData.get("password") as string;
 
     if (!email || !password) {
-      SweetAlert.fire({
+      swal({
         icon: "error",
         title: "Champs requis",
         text: "Email et mot de passe sont requis.",
@@ -78,7 +79,7 @@ export default function LoginPage() {
       const exists = await checkEmailExists(email);
       if (exists) {
         setRedirecting(false);
-        const result = await SweetAlert.fire({
+        const result = await swal({
           icon: "warning",
           title: "Ce compte existe déjà",
           text: "Un compte CaMI est déjà associé à cet email. Voulez-vous vous connecter à la place ?",
@@ -105,14 +106,14 @@ export default function LoginPage() {
     if (ok?.ok) {
       window.location.assign("/");
     } else if (ok?.error) {
-      SweetAlert.fire({
+      swal({
         icon: "error",
         title: "Connexion échouée",
         text: typeof ok.error === "string" ? ok.error : "Identifiant ou mot de passe incorrect.",
         confirmButtonText: "OK",
       });
     } else {
-      SweetAlert.fire({
+      swal({
         icon: "error",
         title: "Connexion impossible",
         text: "Une erreur est survenue. Réessayez plus tard.",
@@ -178,24 +179,39 @@ export default function LoginPage() {
               />
             </div>
             <button
-              className="btn-primary w-full"
+              type="submit"
+              style={{ display: "none" }}
               disabled={redirecting}
             >
-              {redirecting ? "…" : mode === "signup" ? "Créer le compte" : "Se connecter"}
+              Submit
             </button>
           </form>
 
-          <div className="mt-5 border-t pt-4 flex flex-col gap-2">
+          <div className="mt-5 border-t pt-4 flex flex-col gap-3">
             <p className="text-[13px] text-center" style={{ color: "var(--ink-soft)" }}>
               — ou —
             </p>
-            <button
-              onClick={handleGoogle}
-              disabled={redirecting}
-              className="btn-ghost w-full text-[13px] flex items-center justify-center gap-2"
-            >
-              🔑 Se connecter avec Google
-            </button>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={handleGoogle}
+                disabled={redirecting}
+                className="btn-ghost text-[13px] flex items-center justify-center gap-2"
+              >
+                🔑 Google
+              </button>
+              <button
+                type="submit"
+                form={undefined}
+                onClick={(e) => {
+                  e.preventDefault();
+                  void handleSubmit(e as unknown as React.FormEvent);
+                }}
+                disabled={redirecting}
+                className="btn-ghost text-[13px] flex items-center justify-center gap-2"
+              >
+                📧 Email
+              </button>
+            </div>
           </div>
 
           <p className="mt-5 text-center text-[13px]" style={{ color: "var(--ink-faint)" }}>
