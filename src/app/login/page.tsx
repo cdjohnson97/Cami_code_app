@@ -95,12 +95,24 @@ export default function LoginPage() {
       }
     }
 
-    const ok = await signIn("email", {
-      email,
-      password,
-      action: mode,
-      redirect: false,
-    });
+    let ok;
+    try {
+      ok = await signIn("email", {
+        email,
+        password,
+        action: mode,
+        redirect: false,
+      });
+    } catch (err: any) {
+      setRedirecting(false);
+      swal({
+        icon: "error",
+        title: "Identifiants incorrects",
+        text: err?.message ?? "Identifiant ou mot de passe incorrect. Réessayez.",
+        confirmButtonText: "Réessayer",
+      });
+      return;
+    }
     setRedirecting(false);
 
     if (ok?.ok) {
@@ -108,16 +120,16 @@ export default function LoginPage() {
     } else if (ok?.error) {
       swal({
         icon: "error",
-        title: "Connexion échouée",
-        text: typeof ok.error === "string" ? ok.error : "Identifiant ou mot de passe incorrect.",
-        confirmButtonText: "OK",
+        title: "Identifiants incorrects",
+        text: typeof ok.error === "string" ? ok.error : "Identifiant ou mot de passe incorrect. Réessayez.",
+        confirmButtonText: "Réessayer",
       });
     } else {
       swal({
         icon: "error",
-        title: "Connexion impossible",
+        title: "Identifiants incorrects",
         text: "Une erreur est survenue. Réessayez plus tard.",
-        confirmButtonText: "OK",
+        confirmButtonText: "Réessayer",
       });
     }
   }
