@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#C13D63" />
+      <stop offset="100%" stop-color="#9E2C4D" />
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E8F72" />
+      <stop offset="100%" stop-color="#5FD3AE" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-opacity="0.25" />
+    </filter>
+  </defs>
+
+  <!-- Corps -->
+  <rect x="64" y="64" width="384" height="384" rx="96" fill="#17151F" filter="url(#shadow)" />
+
+  <!-- Tête robot (carrée avec coins arrondis) -->
+  <rect x="140" y="100" width="232" height="220" rx="32" fill="#F0759A" />
+
+  <!-- Antennes -->
+  <line x1="198" y1="92" x2="198" y2="60" stroke="#C13D63" strokeWidth="12" strokeLinecap="round" />
+  <line x1="314" y1="92" x2="314" y2="60" stroke="#F0759A" strokeWidth="12" strokeLinecap="round" />
+  <circle cx="198" cy="54" r="8" fill="#1E8F72" />
+  <circle cx="314" cy="54" r="8" fill="#5FD3AE" />
+
+  <!-- Yeux robot -->
+  <rect x="190" y="160" width="44" height="30" rx="6" fill="#FFFFFF" />
+  <rect x="278" y="160" width="44" height="30" rx="6" fill="#FFFFFF" />
+  <circle cx="212" cy="175" r="6" fill="#211129" />
+  <circle cx="300" cy="175" r="6" fill="#211129" />
+
+  <!-- Bouche -->
+  <rect x="222" y="220" width="68" height="16" rx="8" fill="#211129" />
+
+  <!-- Bras robot -->
+  <path d="M 118 260 Q 90 300 130 340" fill="none" stroke="#F0759A" strokeWidth="16" strokeLinecap="round" />
+  <path d="M 394 260 Q 422 300 382 340" fill="none" stroke="#F0759A" strokeWidth="16" strokeLinecap="round" />
+
+  <!-- Symbole code -->
+  <text x="256" y="332" font-family="monospace" font-size="22" font-weight="bold" fill="#1E8F72" text-anchor="middle">&lt;/&gt;</text>
+  <text x="256" y="366" font-family="monospace" font-size="15" fill="#5FD3AE" text-anchor="middle">CaMI</text>
+</svg>

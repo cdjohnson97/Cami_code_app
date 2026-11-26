@@ -100,15 +100,22 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <>
-      <AppLink
-        to="home"
-        onNavigate={onNavigate}
-        aria-current={route.view === "home" ? "page" : undefined}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: "spring", stiffness: 300, damping: 24 }}
         className="flex-none flex items-baseline gap-2 px-1 pt-1 pb-1.5 no-underline text-left cursor-pointer"
       >
-        <span className="font-mono text-[13px] font-semibold rounded-[6px] border-[1.5px] px-1.5 py-px" style={{ color: "var(--accent)", borderColor: "var(--accent)" }}>{"</>"}</span>
-        <span className="font-display text-[19px] font-semibold" style={{ color: "var(--ink)" }}>CaMI</span>
-      </AppLink>
+        <AppLink
+          to="home"
+          onNavigate={onNavigate}
+          aria-current={route.view === "home" ? "page" : undefined}
+          className="flex items-baseline gap-2 px-1 pt-1 pb-1.5 no-underline text-left cursor-pointer"
+        >
+          <span className="font-mono text-[13px] font-semibold rounded-[6px] border-[1.5px] px-1.5 py-px" style={{ color: "var(--accent)", borderColor: "var(--accent)" }}>{"</>"}</span>
+          <span className="font-display text-[19px] font-semibold" style={{ color: "var(--ink)" }}>CaMI</span>
+        </AppLink>
+      </motion.div>
 
       <div className="flex-none rounded-xl border px-3.5 py-3" style={{ background: "var(--paper)", borderColor: "var(--line)" }}>
         <div className="flex justify-between text-[12.5px] mb-1.5" style={{ color: "var(--ink-soft)" }}>
@@ -154,7 +161,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 {phase.label} · {phase.shortLabel}
               </div>
               <div className="flex flex-col gap-0.5">
-                {phase.chapters.map((ch: Chapter) => {
+                {phase.chapters.map((ch: Chapter, ci: number) => {
                   const active = route.view === "chapter" && route.chapterId === ch.id;
                   const done2 = chapterDone(ch, completed);
                   const unlocked = isChapterUnlocked(ch.id, completed);
@@ -179,22 +186,37 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                   // Locked chapters aren't links: nothing to open yet.
                   if (!unlocked) {
                     return (
-                      <span key={ch.id} aria-disabled="true" className={className} style={{ color: "var(--ink-faint)", cursor: "not-allowed" }}>
+                      <motion.span
+                        key={ch.id}
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: ci * 0.02, duration: 0.3 }}
+                        aria-disabled="true"
+                        className={className}
+                        style={{ color: "var(--ink-faint)", cursor: "not-allowed" }}
+                      >
                         {content}
-                      </span>
+                      </motion.span>
                     );
                   }
                   return (
-                    <AppLink
+                    <motion.div
                       key={ch.id}
-                      to={ch.id}
-                      onNavigate={onNavigate}
-                      aria-current={active ? "page" : undefined}
-                      className={className}
-                      style={active ? { background: "var(--accent-soft)", color: "var(--accent)", fontWeight: 600 } : { color: "var(--ink-soft)" }}
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: ci * 0.02, duration: 0.3 }}
+                      whileHover={{ y: -2 }}
                     >
-                      {content}
-                    </AppLink>
+                      <AppLink
+                        to={ch.id}
+                        onNavigate={onNavigate}
+                        aria-current={active ? "page" : undefined}
+                        className={className}
+                        style={active ? { background: "var(--accent-soft)", color: "var(--accent)", fontWeight: 600 } : { color: "var(--ink-soft)" }}
+                      >
+                        {content}
+                      </AppLink>
+                    </motion.div>
                   );
                 })}
               </div>
@@ -204,18 +226,26 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       <div className="flex-none flex flex-col gap-0.5 pt-3 border-t" style={{ borderColor: "var(--line)" }}>
-        {NAV_ITEMS.map((item) => (
-          <AppLink
+        {NAV_ITEMS.map((item, ni) => (
+          <motion.div
             key={item.id}
-            to={item.id}
-            onNavigate={onNavigate}
-            aria-current={route.view === item.id ? "page" : undefined}
-            className="flex items-center gap-2.5 w-full text-left px-2 py-2 rounded-[9px] no-underline text-[14.5px]"
-            style={route.view === item.id ? { background: "var(--accent-soft)", color: "var(--accent)", fontWeight: 600 } : { color: "var(--ink-soft)" }}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.15 + ni * 0.05, duration: 0.3 }}
+            whileHover={{ y: -2, scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
-            <span className="w-5 text-center">{item.icon}</span>
-            <span>{item.label}</span>
-          </AppLink>
+            <AppLink
+              to={item.id}
+              onNavigate={onNavigate}
+              aria-current={route.view === item.id ? "page" : undefined}
+              className="flex items-center gap-2.5 w-full text-left px-2 py-2 rounded-[9px] no-underline text-[14.5px]"
+              style={route.view === item.id ? { background: "var(--accent-soft)", color: "var(--accent)", fontWeight: 600 } : { color: "var(--ink-soft)" }}
+            >
+              <span className="w-5 text-center">{item.icon}</span>
+              <span>{item.label}</span>
+            </AppLink>
+          </motion.div>
         ))}
         <SignOutItem onNavigate={onNavigate} />
       </div>
@@ -289,11 +319,13 @@ export function Sidebar() {
         <SidebarContent onNavigate={() => setDrawerOpen(false)} />
       </aside>
 
-      <button
+      <motion.button
         aria-label={collapsed ? "Afficher le menu" : "Réduire le menu"}
         title={collapsed ? "Afficher le menu" : "Réduire le menu"}
         onClick={toggleSidebar}
         className="hidden md:flex items-center justify-center w-7 h-7 rounded-full border fixed top-6 z-[160] text-[12px] leading-none transition-[left] duration-300 ease-out cursor-pointer"
+        animate={{ rotate: collapsed ? 180 : 0 }}
+        transition={{ type: "spring", stiffness: 400, damping: 20 }}
         style={{
           left: collapsed ? "14px" : "258px",
           background: "var(--paper)",
@@ -303,7 +335,7 @@ export function Sidebar() {
         }}
       >
         {collapsed ? "›" : "‹"}
-      </button>
+      </motion.button>
     </>
   );
 }
