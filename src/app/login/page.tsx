@@ -151,7 +151,7 @@ export default function LoginPage() {
           className="rounded-(--radius) border p-6 mb-6"
           style={{ background: "var(--paper)", borderColor: "var(--line)" }}
         >
-          <form onSubmit={handleSubmit} className="space-y-3.5">
+          <form onSubmit={handleSubmit} className="space-y-3.5" id="login-form">
             <div>
               <label className="block text-[13px] font-medium mb-1.5" style={{ color: "var(--ink-soft)" }}>
                 Email
@@ -178,19 +178,9 @@ export default function LoginPage() {
                 style={{ borderColor: "var(--line-strong)", background: "var(--bg)", color: "var(--ink)" }}
               />
             </div>
-            <button
-              type="submit"
-              style={{ display: "none" }}
-              disabled={redirecting}
-            >
-              Submit
-            </button>
           </form>
 
           <div className="mt-5 border-t pt-4 flex flex-col gap-3">
-            <p className="text-[13px] text-center" style={{ color: "var(--ink-soft)" }}>
-              — ou —
-            </p>
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={handleGoogle}
@@ -201,15 +191,11 @@ export default function LoginPage() {
               </button>
               <button
                 type="submit"
-                form={undefined}
-                onClick={(e) => {
-                  e.preventDefault();
-                  void handleSubmit(e as unknown as React.FormEvent);
-                }}
+                form="login-form"
                 disabled={redirecting}
-                className="btn-ghost text-[13px] flex items-center justify-center gap-2"
+                className="w-full btn-ghost text-[13px] flex items-center justify-center gap-2"
               >
-                📧 Email
+                {mode === "signup" ? "Créer un compte" : "Se connecter"}
               </button>
             </div>
           </div>
