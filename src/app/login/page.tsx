@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getCsrfToken } from "next-auth/react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import SweetAlert from "sweetalert2";
@@ -95,40 +95,41 @@ export default function LoginPage() {
       }
     }
 
-    let ok;
     try {
-      ok = await signIn("email", {
-        email,
-        password,
-        action: mode,
-        redirect: false,
+      const csrfToken = await getCsrfToken();
+      const res = await fetch("/api/auth/callback/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
+          action: mode,
+          csrfToken,
+          callbackUrl: "/",
+          json: true,
+        }),
       });
+      console.log("[login] fetch response status:", res.status);
+      if (res.ok) {
+        window.location.assign("/");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        console.log("[login] fetch error body:", data);
+        setRedirecting(false);
+        swal({
+          icon: "error",
+          title: "Identifiants incorrects",
+          text: data?.message || data?.error || "Identifiant ou mot de passe incorrect. Réessayez.",
+          confirmButtonText: "Réessayer",
+        });
+      }
     } catch (err: any) {
+      console.error("[login] fetch threw:", err);
       setRedirecting(false);
       swal({
         icon: "error",
         title: "Identifiants incorrects",
         text: err?.message ?? "Identifiant ou mot de passe incorrect. Réessayez.",
-        confirmButtonText: "Réessayer",
-      });
-      return;
-    }
-    setRedirecting(false);
-
-    if (ok?.ok) {
-      window.location.assign("/");
-    } else if (ok?.error) {
-      swal({
-        icon: "error",
-        title: "Identifiants incorrects",
-        text: typeof ok.error === "string" ? ok.error : "Identifiant ou mot de passe incorrect. Réessayez.",
-        confirmButtonText: "Réessayer",
-      });
-    } else {
-      swal({
-        icon: "error",
-        title: "Identifiants incorrects",
-        text: "Une erreur est survenue. Réessayez plus tard.",
         confirmButtonText: "Réessayer",
       });
     }
