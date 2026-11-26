@@ -313,7 +313,7 @@ export function Sidebar() {
       )}
 
       <aside
-        className={`md:sticky md:top-0 md:h-screen md:translate-x-0 fixed top-0 left-0 h-screen z-[150] w-[min(84vw,320px)] transition-[width,opacity,padding] duration-300 ease-out border-r flex flex-col gap-6 px-4 py-6 overflow-y-auto overflow-x-hidden overscroll-contain ${drawerOpen ? "translate-x-0" : "-translate-x-full"} ${collapsed ? "md:w-0 md:px-0 md:py-6 md:opacity-0 md:pointer-events-none md:overflow-hidden md:border-transparent" : "md:w-[272px] md:opacity-100"}`}
+        className={`md:sticky md:top-0 md:h-screen md:translate-x-0 fixed top-0 left-0 h-screen z-[150] w-[min(84vw,320px)] transition-all duration-300 ease-out border-r flex flex-col gap-6 px-4 py-6 overflow-y-auto overflow-x-hidden overscroll-contain ${drawerOpen ? "translate-x-0" : "-translate-x-full"} ${collapsed ? "md:w-0 md:px-0 md:py-6 md:opacity-0 md:pointer-events-none md:overflow-hidden md:border-transparent" : "md:w-[272px] md:opacity-100"}`}
         style={{ background: "var(--sidebar)", borderColor: "var(--line)" }}
       >
         <SidebarContent onNavigate={() => setDrawerOpen(false)} />
